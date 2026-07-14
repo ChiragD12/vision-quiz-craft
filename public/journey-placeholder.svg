@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="400" height="560">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a0f2e"/>
+      <stop offset="100%" stop-color="#4a2c1a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="560" fill="url(#g)"/>
+  <g opacity="0.85">
+    <circle cx="200" cy="240" r="72" fill="none" stroke="url(#gold)" stroke-width="2"/>
+    <circle cx="200" cy="240" r="42" fill="none" stroke="url(#gold)" stroke-width="1.5" opacity="0.6"/>
+    <path d="M200 178 L214 232 L268 232 L224 262 L240 316 L200 284 L160 316 L176 262 L132 232 L186 232 Z" fill="url(#gold)" opacity="0.35"/>
+  </g>
+  <text x="200" y="410" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#fde68a" opacity="0.85">Bharat</text>
+  <text x="200" y="440" text-anchor="middle" font-family="Georgia, serif" font-size="12" letter-spacing="4" fill="#fde68a" opacity="0.55">JOURNEY</text>
+</svg>

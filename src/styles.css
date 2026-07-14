@@ -1,0 +1,374 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+@import "@fontsource/fraunces/400.css";
+@import "@fontsource/fraunces/500.css";
+@import "@fontsource/fraunces/600.css";
+@import "@fontsource/fraunces/700.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Inter", ui-serif, Georgia, serif;
+  --shadow-lift: var(--shadow-lift-value);
+  --shadow-surface: var(--shadow-surface-value);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* Deep navy dark theme */
+  --background: oklch(0.16 0.03 260);
+  --foreground: oklch(0.96 0.01 90);
+
+  --card: oklch(0.21 0.025 260);
+  --card-foreground: oklch(0.96 0.01 90);
+
+  --popover: oklch(0.2 0.025 260);
+  --popover-foreground: oklch(0.96 0.01 90);
+
+  /* Warm gold accent */
+  --primary: oklch(0.82 0.13 82);
+  --primary-foreground: oklch(0.18 0.02 260);
+
+  --accent: oklch(0.82 0.13 82);
+  --accent-foreground: oklch(0.18 0.02 260);
+
+  --secondary: oklch(0.26 0.02 260);
+  --secondary-foreground: oklch(0.96 0.01 90);
+
+  --muted: oklch(0.24 0.02 260);
+  --muted-foreground: oklch(0.7 0.02 260);
+
+  --destructive: oklch(0.66 0.2 25);
+  --destructive-foreground: oklch(0.98 0.01 90);
+
+  --success: oklch(0.74 0.15 155);
+  --success-foreground: oklch(0.16 0.02 260);
+
+  --border: oklch(1 0 0 / 0.08);
+  --input: oklch(1 0 0 / 0.08);
+  --ring: oklch(0.82 0.13 82);
+  --color-scheme: dark;
+
+  /* Elevation. Dark theme keeps its original single deep shadow;
+     surfaces had no resting shadow before, so that stays "none". */
+  --shadow-lift-value: 0 20px 48px -24px rgb(0 0 0 / 0.75);
+  --shadow-surface-value: none;
+
+  /* -------- Glass-surface tokens --------
+     Used by translucent "glass" UI (e.g. Settings' GlassCard, pills,
+     radio-cards, glass inputs/buttons). Values below reproduce exactly
+     what was previously hardcoded per-component for the dark theme, so
+     dark stays pixel-identical; the light theme overrides these with
+     warm-neutral/white-glass equivalents instead of white-on-dark
+     overlays, so any component built from these tokens improves in
+     light automatically. */
+  --glass-tint-strong: rgba(255, 255, 255, 0.05);
+  --glass-tint-weak: rgba(255, 255, 255, 0.015);
+  --glass-bg: linear-gradient(165deg, var(--glass-tint-strong), var(--glass-tint-weak));
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-inset-line: rgba(255, 255, 255, 0.05);
+  --glass-shadow-color: rgba(0, 0, 0, 0.6);
+  --glass-shadow: 0 1px 0 0 var(--glass-inset-line) inset, 0 20px 50px -20px var(--glass-shadow-color);
+  --glass-hover-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent),
+    0 20px 60px -20px color-mix(in srgb, var(--primary) 15%, transparent);
+
+  --chip-icon-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 16%, transparent),
+    color-mix(in srgb, var(--primary) 3%, transparent)
+  );
+  --chip-icon-border: color-mix(in srgb, var(--primary) 25%, transparent);
+
+  --option-border-inactive: var(--glass-border);
+  --option-bg-inactive: rgba(255, 255, 255, 0.02);
+  --option-border-active: color-mix(in srgb, var(--primary) 40%, transparent);
+  --option-bg-active: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 10%, transparent),
+    color-mix(in srgb, var(--primary) 2%, transparent)
+  );
+  --option-shadow-active:
+    0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent),
+    0 8px 24px -12px color-mix(in srgb, var(--primary) 25%, transparent);
+  --option-dot-border-inactive: rgba(255, 255, 255, 0.25);
+  --option-dot-border-active: var(--primary);
+  --option-dot-bg-active: color-mix(in srgb, var(--primary) 15%, transparent);
+
+  --pill-border: var(--glass-border);
+  --pill-bg: rgba(255, 255, 255, 0.03);
+
+  --status-online: #4ade80;
+  --status-online-glow: rgba(74, 222, 128, 0.7);
+  --status-offline: #71717a;
+
+  --input-glass-bg: rgba(255, 255, 255, 0.03);
+  --input-glass-border: rgba(255, 255, 255, 0.1);
+
+  --secondary-glass-bg: rgba(255, 255, 255, 0.04);
+  --secondary-glass-border: rgba(255, 255, 255, 0.1);
+  --secondary-glass-bg-hover: rgba(255, 255, 255, 0.08);
+
+  --primary-glow-strong: color-mix(in srgb, var(--primary) 60%, transparent);
+  --destructive-glow: color-mix(in srgb, var(--destructive) 70%, transparent);
+
+  --ambient-primary-glow: color-mix(in srgb, var(--primary) 10%, transparent);
+  --ambient-secondary-glow: rgba(120, 90, 200, 0.08);
+}
+
+/*
+  Light theme overrides.
+  Applied by setting data-theme="light" on the <html> element. Theme
+  initialization/toggling lives in src/lib/appearance.ts (a small,
+  reusable preferences store — see that file for how future appearance
+  settings plug in), invoked from __root.tsx before any route renders.
+  Dark values above are untouched, so the default (no attribute)
+  experience is pixel-identical to before.
+*/
+:root[data-theme="light"] {
+  --color-scheme: light;
+
+  /* Warm linen page background — never pure white, so cards can sit
+     visibly above it. Faint warm cast (not gray, not blue) reads as
+     "considered" rather than a straight dark-theme inversion. */
+  --background: oklch(83.444% 0.02102 224.54 / 0.925);
+  --foreground: oklch(0.235 0.028 262);
+
+  /* Card sits a clear step above the page, with its own warm-white
+     tone rather than being identical to it — this is what creates the
+     "layered" feel instead of flat panels. */
+  --card: oklch(97.756% 0.02504 86.856);
+  --card-foreground: oklch(0.235 0.028 262);
+
+  /* Popovers/dialogs float a step above cards: cleanest white, paired
+     with --shadow-lift below for real separation from the page. */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.235 0.028 262);
+
+  /* Richer, more saturated gold than a naive darkened version of the
+     dark-theme accent — reads as premium leaf/brass rather than mustard,
+     while still holding AA contrast against white and against
+     primary-foreground. */
+  --primary: oklch(0.565 0.15 74);
+  --primary-foreground: oklch(0.99 0.008 90);
+
+  --accent: oklch(0.565 0.15 74);
+  --accent-foreground: oklch(0.99 0.008 90);
+
+  /* Warm ivory secondary/muted surfaces (not cool gray) so chips, tabs
+     and subtle fills feel like part of the same warm palette. */
+  --secondary: oklch(0.955 0.011 80);
+  --secondary-foreground: oklch(0.28 0.03 262);
+
+  --muted: oklch(0.947 0.012 80);
+  --muted-foreground: oklch(0.475 0.026 265);
+
+  --destructive: oklch(0.55 0.19 25);
+  --destructive-foreground: oklch(0.99 0.005 90);
+
+  --success: oklch(0.465 0.13 155);
+  --success-foreground: oklch(0.99 0.005 90);
+
+  /* Warm-tinted, low-opacity borders instead of flat black-alpha — they
+     disappear into the linen background at rest and only read as
+     structure where a card actually needs an edge. */
+  --border: oklch(0.32 0.035 265 / 0.12);
+  --input: oklch(0.32 0.035 265 / 0.11);
+  --ring: oklch(0.565 0.15 74 / 0.6);
+
+  /* Soft, warm-tinted elevation instead of harsh black drop shadows —
+     this alone is most of what separates "premium" from "flat" on a
+     light surface. */
+  --shadow-lift-value:
+    0 2px 6px -2px oklch(0.32 0.05 70 / 0.1),
+    0 28px 60px -30px oklch(0.32 0.06 72 / 0.32);
+  --shadow-surface-value:
+    0 1px 2px oklch(0.32 0.05 70 / 0.05),
+    0 10px 26px -18px oklch(0.32 0.06 72 / 0.2);
+
+  /* -------- Glass-surface tokens (light) --------
+     White-glass on the warm linen page instead of white-on-dark
+     overlays, plus warm-neutral (not black) borders/insets — this is
+     what lets GlassCard, pills, radio-cards, etc. read as "premium
+     light glass" rather than an inverted dark panel. */
+  --glass-tint-strong: oklch(1 0 0 / 0.6);
+  --glass-tint-weak: oklch(1 0 0 / 0.28);
+  --glass-border: oklch(0.32 0.035 265 / 0.12);
+  --glass-inset-line: oklch(1 0 0 / 0.65);
+  --glass-shadow-color: oklch(0.32 0.06 72 / 0.28);
+  --glass-hover-shadow:
+    0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent),
+    0 20px 60px -20px color-mix(in srgb, var(--primary) 16%, transparent);
+
+  --option-bg-inactive: oklch(0.32 0.035 265 / 0.035);
+  --option-dot-border-inactive: oklch(0.32 0.035 265 / 0.35);
+
+  --pill-bg: oklch(1 0 0 / 0.5);
+
+  --status-online: var(--success);
+  --status-online-glow: color-mix(in srgb, var(--success) 55%, transparent);
+  --status-offline: var(--muted-foreground);
+
+  --input-glass-bg: oklch(1 0 0 / 0.6);
+  --input-glass-border: oklch(0.32 0.035 265 / 0.14);
+
+  --secondary-glass-bg: oklch(1 0 0 / 0.5);
+  --secondary-glass-border: oklch(0.32 0.035 265 / 0.14);
+  --secondary-glass-bg-hover: oklch(1 0 0 / 0.75);
+
+  --ambient-secondary-glow: rgba(120, 90, 200, 0.05);
+
+  /* -------- Card / Input / Textarea surface polish (Light only) --------
+     Dedicated tokens (not --card / --input) so this first pass can't
+     accidentally change any other component still reading those base
+     tokens. Card keeps a touch of translucency so the wallpaper stays
+     visible behind it rather than being fully occluded; inputs/textareas
+     get a warm "paper" surface instead of transparent-on-wallpaper. */
+  --card-surface-bg: linear-gradient(
+    165deg,
+    oklch(98.3% 0.022 85 / 0.96),
+    oklch(96.2% 0.03 82 / 0.9)
+  );
+  --card-surface-border: oklch(0.38 0.045 68 / 0.18);
+  --card-surface-highlight: oklch(1 0 0 / 0.55);
+  --card-surface-shadow:
+    0 1px 0 0 var(--card-surface-highlight) inset,
+    0 1px 3px oklch(0.32 0.05 70 / 0.08),
+    0 26px 54px -26px oklch(0.32 0.06 72 / 0.34);
+  --card-surface-radius: calc(var(--radius) + 6px);
+
+  --input-surface-bg: oklch(98% 0.02 85 / 0.92);
+  --input-surface-border: oklch(0.38 0.045 68 / 0.26);
+  --input-surface-shadow: inset 0 1px 2px oklch(0.32 0.05 70 / 0.05);
+  --input-surface-placeholder: oklch(0.42 0.03 265 / 0.8);
+  --input-surface-focus-border: var(--primary);
+  --input-surface-focus-shadow:
+    inset 0 1px 2px oklch(0.32 0.05 70 / 0.05),
+    0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+/*
+  Card / Input / Textarea surface polish — Light Theme only.
+  Scoped entirely under [data-theme="light"], so Dark Theme's existing
+  bg-card / border-input / shadow-sm styling is completely untouched.
+*/
+:root[data-theme="light"] .card-surface {
+  background: var(--card-surface-bg);
+  border-color: var(--card-surface-border);
+  border-radius: var(--card-surface-radius);
+  box-shadow: var(--card-surface-shadow);
+}
+
+:root[data-theme="light"] .input-surface {
+  background: var(--input-surface-bg);
+  border-color: var(--input-surface-border);
+  box-shadow: var(--input-surface-shadow);
+}
+
+:root[data-theme="light"] .input-surface::placeholder {
+  color: var(--input-surface-placeholder);
+}
+
+:root[data-theme="light"] .input-surface:focus-visible {
+  outline: none;
+  border-color: var(--input-surface-focus-border);
+  box-shadow: var(--input-surface-focus-shadow);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+body {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+html {
+  font-family: var(--font-sans);
+  color-scheme: var(--color-scheme, dark);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  min-height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+  overflow-x: hidden;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+  img:not([aria-hidden="true"]),
+video,
+svg {
+  max-width: 100%;
+}
+
+img[aria-hidden="true"] {
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  .nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+@utility surface {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-surface);
+}
