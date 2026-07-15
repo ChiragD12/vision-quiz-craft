@@ -166,7 +166,7 @@ export function chapterCoverUrl(chapterId: number): string {
 // ---------- lion avatars ----------
 
 const avatars = toUrlMap(
-  import.meta.glob("/src/assets/Secret-Folder/avatars/*.{webp,png,jpg,jpeg}", {
+  import.meta.glob("/src/assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
     eager: true,
     as: "url",
   }),
