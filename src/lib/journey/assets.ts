@@ -145,16 +145,6 @@ export function storyImageUrl(storyId: number): string {
 
 // ---------- chapter covers ----------
 
-console.log(
-  "CHAPTER COVERS",
-  Object.keys(
-    import.meta.glob("../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}", {
-      eager: true,
-      as: "url",
-    }),
-  ),
-);
-
 const chapterCovers = toUrlMap(
   import.meta.glob(
     "../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}",
@@ -168,42 +158,34 @@ export function chapterCoverUrl(chapterId: number): string {
     k.includes(`chapter-cover-${suffix}`),
   );
   if (hit) return chapterCovers[hit];
-  // Fallback to first image of the chapter as a nice-enough placeholder cover.
   const first = chapterImagesFor(chapterId)[0];
   return first ?? PLACEHOLDER;
 }
 
 // ---------- lion avatars ----------
 
-console.log(
-  "AVATARS",
-  Object.keys(
-    import.meta.glob("../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
-      eager: true,
-      as: "url",
-    }),
+const avatars = toUrlMap(
+  import.meta.glob(
+    "../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}",
+    { eager: true, import: "default" },
   ),
 );
 
-const avatars = toUrlMap(
-  import.meta.glob("../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
-    eager: true,
-    as: "url",
-  }),
-);
-
 export function lionAvatarUrl(stageId: number): string {
-  const suffix = String(stageId + 1).padStart(2, "0"); // stage 0 -> lion-01
+  const suffix = String(stageId + 1).padStart(2, "0");
+
   const hit = Object.keys(avatars).find((k) => {
-  const n = k.toLowerCase();
-  return (
-    n.endsWith(`lion-${suffix}.png`) ||
-    n.endsWith(`lion-${suffix}.webp`) ||
-    n.endsWith(`lion-${suffix}.jpg`) ||
-    n.endsWith(`lion-${suffix}.jpeg`)
-  );
-});
+    const n = k.toLowerCase();
+    return (
+      n.endsWith(`lion-${suffix}.png`) ||
+      n.endsWith(`lion-${suffix}.webp`) ||
+      n.endsWith(`lion-${suffix}.jpg`) ||
+      n.endsWith(`lion-${suffix}.jpeg`)
+    );
+  });
+
   if (hit) return avatars[hit];
+
   const any = firstUrl(avatars);
   return any ?? PLACEHOLDER;
 }
@@ -211,15 +193,16 @@ export function lionAvatarUrl(stageId: number): string {
 // ---------- wallpapers ----------
 
 const wallpapers = toUrlMap(
-  import.meta.glob("/src/assets/Secret-Folder/wallpapers/*.{webp,png,jpg,jpeg}", {
-    eager: true,
-    as: "url",
-  }),
+  import.meta.glob(
+    "../../assets/Secret-Folder/wallpapers/*.{webp,png,jpg,jpeg}",
+    { eager: true, import: "default" },
+  ),
 );
 
 export function wallpaperUrl(wallpaperId: number): string {
   const spec = WALLPAPERS.find((w) => w.id === wallpaperId);
   if (!spec) return PLACEHOLDER;
+
   const hit = Object.keys(wallpapers).find((k) => k.endsWith(spec.filename));
   return hit ? wallpapers[hit] : PLACEHOLDER;
 }
