@@ -46,42 +46,42 @@ function toUrlMap(mod: Record<string, unknown>): Record<string, string> {
 
 const chapterGlobs = {
   1: import.meta.glob(
-    "/src/assets/Secret-Folder/chapters/01-ancient-glory/*.{webp,png,jpg,jpeg}",
+    "../../assets/Secret-Folder/chapters/01-ancient-glory/*.{webp,png,jpg,jpeg}",
     { eager: true, as: "url" },
   ),
   2: import.meta.glob(
-    "/src/assets/Secret-Folder/chapters/02-golden-age/*.{webp,png,jpg,jpeg}",
+    "../../assets/Secret-Folder/chapters/02-golden-age/*.{webp,png,jpg,jpeg}",
     { eager: true, as: "url" },
   ),
   3: import.meta.glob(
-    "/src/assets/Secret-Folder/chapters/03-trouble-begins/*.{webp,png,jpg,jpeg}",
+    "../../assets/Secret-Folder/chapters/03-trouble-begins/*.{webp,png,jpg,jpeg}",
     { eager: true, as: "url" },
   ),
   4: import.meta.glob(
-    "/src/assets/Secret-Folder/chapters/04-long-night/*.{webp,png,jpg,jpeg}",
+    "../../assets/Secret-Folder/chapters/04-long-night/*.{webp,png,jpg,jpeg}",
     { eager: true, as: "url" },
   ),
   5: import.meta.glob(
-    "/src/assets/Secret-Folder/chapters/05-final-blow/*.{webp,png,jpg,jpeg}",
+    "../../assets/Secret-Folder/chapters/05-final-blow/*.{webp,png,jpg,jpeg}",
     { eager: true, as: "url" },
   ),
   6: import.meta.glob(
-    "/src/assets/Secret-Folder/chapters/06-bharat-rising/*.{webp,png,jpg,jpeg}",
+    "../../assets/Secret-Folder/chapters/06-bharat-rising/*.{webp,png,jpg,jpeg}",
     { eager: true, as: "url" },
   ),
 } as const;
 
 // Legacy fallback so the current app keeps its existing images visible.
 const legacyGlobs = [
-  import.meta.glob("/src/assets/Secret-Folder/3 stars/*.{png,jpg,jpeg,webp}", {
+  import.meta.glob("../../assets/Secret-Folder/3 stars/*.{png,jpg,jpeg,webp}", {
     eager: true,
     as: "url",
   }),
-  import.meta.glob("/src/assets/Secret-Folder/4 stars/*.{png,jpg,jpeg,webp}", {
+  import.meta.glob("../../assets/Secret-Folder/4 stars/*.{png,jpg,jpeg,webp}", {
     eager: true,
     as: "url",
   }),
-  import.meta.glob("/src/assets/Secret-Folder/5 stars/*.{png,jpg,jpeg,webp}", {
+  import.meta.glob("../../assets/Secret-Folder/5 stars/*.{png,jpg,jpeg,webp}", {
     eager: true,
     as: "url",
   }),
@@ -147,7 +147,7 @@ export function storyImageUrl(storyId: number): string {
 
 const chapterCovers = toUrlMap(
   import.meta.glob(
-    "/src/assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}",
+    "../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}",
     { eager: true, as: "url" },
   ),
 );
@@ -166,7 +166,7 @@ export function chapterCoverUrl(chapterId: number): string {
 // ---------- lion avatars ----------
 
 const avatars = toUrlMap(
-  import.meta.glob("/src/assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
+  import.meta.glob("../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
     eager: true,
     as: "url",
   }),
@@ -191,7 +191,7 @@ export function lionAvatarUrl(stageId: number): string {
 // ---------- wallpapers ----------
 
 const wallpapers = toUrlMap(
-  import.meta.glob("/src/assets/Secret-Folder/wallpapers/*.{webp,png,jpg,jpeg}", {
+  import.meta.glob("../../assets/Secret-Folder/wallpapers/*.{webp,png,jpg,jpeg}", {
     eager: true,
     as: "url",
   }),
