@@ -31,12 +31,16 @@ const artCultureSections = [
 const isHistoryHub = id === "core-history";
 const isArtCultureHub = id === "core-art-culture";
 
-const topics =
-  id === "core-history"
-    ? historySections
-    : id === "core-art-culture"
-      ? artCultureSections
-      : api.topicsForSubject(id);
+const hubBuiltinIds = new Set([
+  ...historySections.map((s) => s.id),
+  ...artCultureSections.map((s) => s.id),
+]);
+
+const topics = isHistoryHub
+  ? [...historySections, ...api.topicsForSubject(id)]
+  : isArtCultureHub
+    ? [...artCultureSections, ...api.topicsForSubject(id)]
+    : api.topicsForSubject(id);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   if (!subject) {
@@ -110,8 +114,7 @@ const backgroundSrc =
   {subject.name}
 </h1>
 
-{!isHistoryHub && !isArtCultureHub && (
-  <Button
+        <Button
   className="mt-4"
   onClick={() =>
     navigate({
@@ -124,7 +127,6 @@ const backgroundSrc =
 >
   + Add Topic
 </Button>
-)}
       </header>
 
       <main className="mx-auto max-w-4xl px-5 py-10 space-y-10">
@@ -140,8 +142,9 @@ const backgroundSrc =
   id === "core-ancient-history" ||
   id === "core-indian-dances" ||
   id === "core-indian-temples";
-              const isHub = isHistoryHub || isArtCultureHub;
-              const notesCount = isHub ? 0 : api.notesForTopic(t.id).length;
+              const isHubItem =
+                (isHistoryHub || isArtCultureHub) && hubBuiltinIds.has(t.id);
+              const notesCount = isHubItem ? 0 : api.notesForTopic(t.id).length;
               return (
                 <div key={t.id} className="space-y-1">
                   <Card
@@ -150,7 +153,7 @@ const backgroundSrc =
     isExpanded && "border-primary/50",
   )}
   onClick={() => {
-  if (isHub) {
+  if (isHubItem) {
     navigate({
   to: "/subject/$id",
   params: { id: t.id },
@@ -168,7 +171,7 @@ const backgroundSrc =
 >
                     <div className="font-medium">{t.name}</div>
                     <div className="text-xs text-muted-foreground mt-1">
-  {isHub
+  {isHubItem
     ? "Open"
     : isSubHistory
       ? "Manage topics"
@@ -177,7 +180,7 @@ const backgroundSrc =
                   </Card>
 
                   <AnimatePresence>
-                    {!isHub && isExpanded && (
+                    {!isHubItem && isExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}

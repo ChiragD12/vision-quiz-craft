@@ -17,6 +17,7 @@ import {
   FileText,
   Check,
   X,
+  PlusCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FixedBackground } from "@/components/fixed-background";
@@ -193,10 +194,10 @@ function SubjectsPage() {
                   </div>
 
                   <CollapsibleContent>
-                    <div className="border-t border-border px-4 py-3 bg-background/40">
+                    <div className="border-t border-border px-4 py-3 bg-background/40 space-y-3">
                       {topics.length === 0 ? (
                         <p className="text-sm text-muted-foreground py-2">
-                          No topics yet. Create a quiz from this subject to start adding knowledge.
+                          No topics yet. Add one below or create a quiz to start adding knowledge.
                         </p>
                       ) : (
                         <div className="space-y-2">
@@ -205,6 +206,7 @@ function SubjectsPage() {
                           ))}
                         </div>
                       )}
+                      <AddTopicInline subjectId={s.id} />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
@@ -213,6 +215,32 @@ function SubjectsPage() {
           })}
         </div>
       </main>
+    </div>
+  );
+}
+
+function AddTopicInline({ subjectId }: { subjectId: string }) {
+  const [name, setName] = useState("");
+
+  const addTopic = () => {
+    if (!name.trim()) return;
+    api.ensureTopic(subjectId, name);
+    setName("");
+    toast.success("Topic added.");
+  };
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Add a topic…"
+        className="h-8"
+        onKeyDown={(e) => e.key === "Enter" && addTopic()}
+      />
+      <Button size="sm" onClick={addTopic}>
+        <PlusCircle className="h-3.5 w-3.5 mr-1" /> Add
+      </Button>
     </div>
   );
 }

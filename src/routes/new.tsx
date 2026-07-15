@@ -129,6 +129,7 @@ function NewQuizPage() {
       { id: "core-modern-history", name: "Modern Indian History" },
       { id: "core-medieval-history", name: "Medieval Indian History" },
       { id: "core-ancient-history", name: "Ancient Indian History" },
+      ...api.topicsForSubject(subjectId),
     ];
   }
 
@@ -136,6 +137,7 @@ function NewQuizPage() {
     return [
       { id: "core-indian-dances", name: "Indian Classical & Folk Dances" },
       { id: "core-indian-temples", name: "Indian Temples" },
+      ...api.topicsForSubject(subjectId),
     ];
   }
 
@@ -164,7 +166,7 @@ function NewQuizPage() {
   };
   const resolveTopic = (subId: string) => {
     if (topicId && topicId !== NEW_VALUE) {
-      const found = api.topicsForSubject(subId).find((t) => t.id === topicId);
+      const found = topics.find((t) => t.id === topicId);
       if (found) return found;
     }
     const name = newTopic.trim();
@@ -336,9 +338,7 @@ return (
                       {t.name}
                     </SelectItem>
                   ))}
-                  {subjectId !== "core-history" && subjectId !== "core-art-culture" && (
-  <SelectItem value={NEW_VALUE}>+ Create new topic…</SelectItem>
-)}
+                  <SelectItem value={NEW_VALUE}>+ Create new topic…</SelectItem>
                 </SelectContent>
               </Select>
               {topicId === NEW_VALUE && (
