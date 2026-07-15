@@ -14,6 +14,10 @@ import { WALLPAPERS } from "./wallpapers";
 
 const PLACEHOLDER = "/journey-placeholder.svg";
 
+console.log("AVATARS", avatars);
+console.log("CHAPTER COVERS", chapterCovers);
+console.log("CHAPTER 1", chapterGlobs[1]);
+
 function firstUrl(mod: Record<string, unknown>): string | null {
   const keys = Object.keys(mod).sort((a, b) =>
     a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
@@ -191,7 +195,7 @@ export function lionAvatarUrl(stageId: number): string {
 // ---------- wallpapers ----------
 
 const wallpapers = toUrlMap(
-  import.meta.glob("../../assets/Secret-Folder/wallpapers/*.{webp,png,jpg,jpeg}", {
+  import.meta.glob("/src/assets/Secret-Folder/wallpapers/*.{webp,png,jpg,jpeg}", {
     eager: true,
     as: "url",
   }),
