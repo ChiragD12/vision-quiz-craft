@@ -27,6 +27,7 @@ import { api } from "@/lib/store";
 import { currentLion } from "@/lib/journey";
 import { lionAvatarUrl } from "@/lib/journey/assets";
 import { RewardCeremonyProvider } from "@/components/reward-ceremony/RewardCeremonyProvider";
+import { EdgeNavProvider, EdgeNavHamburger } from "@/components/edge-nav";
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -200,14 +201,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RewardCeremonyProvider>
-        <Toaster position="top-center" richColors theme="dark" />
-        <SplashScreen />
-        <HomeLogo />
-        <AnimatedOutlet />
-        <WallpaperSelector />
-      </RewardCeremonyProvider>
-    </QueryClientProvider>
+  <RewardCeremonyProvider>
+    <EdgeNavProvider>
+      <Toaster position="top-center" richColors theme="dark" />
+      <SplashScreen />
+      <HomeLogo />
+      <EdgeNavHamburger />
+      <AnimatedOutlet />
+      <WallpaperSelector />
+    </EdgeNavProvider>
+  </RewardCeremonyProvider>
+</QueryClientProvider>
   );
 }
 

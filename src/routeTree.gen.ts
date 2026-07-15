@@ -11,9 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubjectsRouteImport } from './routes/subjects'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as SpacedRevisionRouteImport } from './routes/spaced-revision'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as RewardsRouteImport } from './routes/rewards'
+import { Route as QuizModesRouteImport } from './routes/quiz-modes'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NewRouteImport } from './routes/new'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as DebugRouteImport } from './routes/debug'
@@ -35,6 +38,11 @@ const StatsRoute = StatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SpacedRevisionRoute = SpacedRevisionRouteImport.update({
+  id: '/spaced-revision',
+  path: '/spaced-revision',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -48,6 +56,16 @@ const SavedRoute = SavedRouteImport.update({
 const RewardsRoute = RewardsRouteImport.update({
   id: '/rewards',
   path: '/rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizModesRoute = QuizModesRouteImport.update({
+  id: '/quiz-modes',
+  path: '/quiz-modes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewRoute = NewRouteImport.update({
@@ -107,9 +125,12 @@ export interface FileRoutesByFullPath {
   '/debug': typeof DebugRoute
   '/gallery': typeof GalleryRoute
   '/new': typeof NewRoute
+  '/profile': typeof ProfileRoute
+  '/quiz-modes': typeof QuizModesRoute
   '/rewards': typeof RewardsRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/spaced-revision': typeof SpacedRevisionRoute
   '/stats': typeof StatsRoute
   '/subjects': typeof SubjectsRoute
   '/quiz/$id': typeof QuizIdRoute
@@ -124,9 +145,12 @@ export interface FileRoutesByTo {
   '/debug': typeof DebugRoute
   '/gallery': typeof GalleryRoute
   '/new': typeof NewRoute
+  '/profile': typeof ProfileRoute
+  '/quiz-modes': typeof QuizModesRoute
   '/rewards': typeof RewardsRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/spaced-revision': typeof SpacedRevisionRoute
   '/stats': typeof StatsRoute
   '/subjects': typeof SubjectsRoute
   '/quiz/$id': typeof QuizIdRoute
@@ -142,9 +166,12 @@ export interface FileRoutesById {
   '/debug': typeof DebugRoute
   '/gallery': typeof GalleryRoute
   '/new': typeof NewRoute
+  '/profile': typeof ProfileRoute
+  '/quiz-modes': typeof QuizModesRoute
   '/rewards': typeof RewardsRoute
   '/saved': typeof SavedRoute
   '/settings': typeof SettingsRoute
+  '/spaced-revision': typeof SpacedRevisionRoute
   '/stats': typeof StatsRoute
   '/subjects': typeof SubjectsRoute
   '/quiz/$id': typeof QuizIdRoute
@@ -161,9 +188,12 @@ export interface FileRouteTypes {
     | '/debug'
     | '/gallery'
     | '/new'
+    | '/profile'
+    | '/quiz-modes'
     | '/rewards'
     | '/saved'
     | '/settings'
+    | '/spaced-revision'
     | '/stats'
     | '/subjects'
     | '/quiz/$id'
@@ -178,9 +208,12 @@ export interface FileRouteTypes {
     | '/debug'
     | '/gallery'
     | '/new'
+    | '/profile'
+    | '/quiz-modes'
     | '/rewards'
     | '/saved'
     | '/settings'
+    | '/spaced-revision'
     | '/stats'
     | '/subjects'
     | '/quiz/$id'
@@ -195,9 +228,12 @@ export interface FileRouteTypes {
     | '/debug'
     | '/gallery'
     | '/new'
+    | '/profile'
+    | '/quiz-modes'
     | '/rewards'
     | '/saved'
     | '/settings'
+    | '/spaced-revision'
     | '/stats'
     | '/subjects'
     | '/quiz/$id'
@@ -213,9 +249,12 @@ export interface RootRouteChildren {
   DebugRoute: typeof DebugRoute
   GalleryRoute: typeof GalleryRoute
   NewRoute: typeof NewRoute
+  ProfileRoute: typeof ProfileRoute
+  QuizModesRoute: typeof QuizModesRoute
   RewardsRoute: typeof RewardsRoute
   SavedRoute: typeof SavedRoute
   SettingsRoute: typeof SettingsRoute
+  SpacedRevisionRoute: typeof SpacedRevisionRoute
   StatsRoute: typeof StatsRoute
   SubjectsRoute: typeof SubjectsRoute
   QuizIdRoute: typeof QuizIdRoute
@@ -240,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/spaced-revision': {
+      id: '/spaced-revision'
+      path: '/spaced-revision'
+      fullPath: '/spaced-revision'
+      preLoaderRoute: typeof SpacedRevisionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -259,6 +305,20 @@ declare module '@tanstack/react-router' {
       path: '/rewards'
       fullPath: '/rewards'
       preLoaderRoute: typeof RewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quiz-modes': {
+      id: '/quiz-modes'
+      path: '/quiz-modes'
+      fullPath: '/quiz-modes'
+      preLoaderRoute: typeof QuizModesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/new': {
@@ -352,9 +412,12 @@ const rootRouteChildren: RootRouteChildren = {
   DebugRoute: DebugRoute,
   GalleryRoute: GalleryRoute,
   NewRoute: NewRoute,
+  ProfileRoute: ProfileRoute,
+  QuizModesRoute: QuizModesRoute,
   RewardsRoute: RewardsRoute,
   SavedRoute: SavedRoute,
   SettingsRoute: SettingsRoute,
+  SpacedRevisionRoute: SpacedRevisionRoute,
   StatsRoute: StatsRoute,
   SubjectsRoute: SubjectsRoute,
   QuizIdRoute: QuizIdRoute,
