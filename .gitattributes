@@ -1,7 +1,0 @@
-src/assets/Secret-Folder/** filter=lfs diff=lfs merge=lfs -text
-src/assets/Secret-Folder/**/*.png filter=lfs diff=lfs merge=lfs -text
-src/assets/Secret-Folder/**/*.jpg filter=lfs diff=lfs merge=lfs -text
-src/assets/Secret-Folder/**/*.jpeg filter=lfs diff=lfs merge=lfs -text
-src/assets/Secret-Folder/**/*.webp filter=lfs diff=lfs merge=lfs -text
-src/assets/Secret-Folder/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
-src/assets/Secret-Folder/**/*.mov filter=lfs diff=lfs merge=lfs -text
