@@ -43,6 +43,8 @@ export type MCQ = {
   difficulty?: "Easy" | "Medium" | "Hard";
 };
 
+export type QuizMode = "classic" | "survival";
+
 export type Quiz = {
   id: string;
   title: string;
@@ -58,6 +60,9 @@ export type Quiz = {
   completed_at?: number;
   saved?: boolean;
   saved_at?: number;
+  // Centralized mode flag the quiz engine checks to switch behaviour.
+  // Absent/"classic" preserves today's behaviour exactly.
+  mode?: QuizMode;
 };
 
 export type WrongAnswer = {
@@ -445,6 +450,25 @@ export const api = {
     return load()
       .quizzes.filter((q) => !q.saved)
       .slice(0, limit);
+  },
+
+  // ----- Survival Mode (best run, local-only — same storage pattern as
+  // correctSinceReward/unlockedImageCount above)
+  getSurvivalBest(): number {
+    if (typeof window === "undefined") return 0;
+    const raw = localStorage.getItem("upsc_survival_best_run");
+    const n = raw ? parseInt(raw, 10) : 0;
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  },
+  recordSurvivalRun(run: number): { best: number; isNewBest: boolean } {
+    const prevBest = api.getSurvivalBest();
+    const isNewBest = run > prevBest;
+    const best = isNewBest ? run : prevBest;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("upsc_survival_best_run", String(best));
+      window.dispatchEvent(new Event("upsc-db-change"));
+    }
+    return { best, isNewBest };
   },
 
   // ----- Bookmarks / Wrong

@@ -23,6 +23,7 @@ type NewQuizSearch = {
   subjectId?: string;
   topicId?: string;
   autoGenerate?: boolean;
+  mode?: "classic" | "survival";
 };
 
 export const Route = createFileRoute("/new")({
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/new")({
   validateSearch: (search: Record<string, unknown>): NewQuizSearch => ({
     subjectId: typeof search.subjectId === "string" ? search.subjectId : undefined,
     topicId: typeof search.topicId === "string" ? search.topicId : undefined,
+    mode: search.mode === "survival" ? "survival" : undefined,
   }),
   head: () => ({ meta: [{ title: "Generate Quiz — UPSC Revision" }] }),
   component: NewQuizPage,
@@ -49,7 +51,8 @@ function fileToDataUrl(f: File): Promise<string> {
 }
 
 function NewQuizPage() {
-  const { subjectId: initialSubjectId, topicId: initialTopicId } = Route.useSearch();
+  const { subjectId: initialSubjectId, topicId: initialTopicId, mode } = Route.useSearch();
+  const isSurvival = mode === "survival";
   const navigate = useNavigate();
   const subjects = api.allSubjects();
 
@@ -188,6 +191,7 @@ function NewQuizPage() {
         current_index: 0,
         status: "in_progress",
         created_at: Date.now(),
+        mode: isSurvival ? "survival" : "classic",
       };
       api.saveQuiz(quiz);
       setBusy(null);

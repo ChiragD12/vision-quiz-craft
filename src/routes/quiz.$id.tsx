@@ -28,6 +28,15 @@ function QuizPage() {
   const [revealed, setRevealed] = useState<boolean>(false);
   const [bmTick, setBmTick] = useState(0);
   const [rewardProgress, setRewardProgress] = useState<number>(() => api.correctSinceReward());
+  // Survival Mode: the quiz engine checks quiz.mode (one centralized flag)
+  // rather than scattering mode checks across files. Classic quizzes have
+  // mode "classic" (or undefined) and are completely unaffected below.
+  const [survivalOver, setSurvivalOver] = useState(false);
+  const [survivalResult, setSurvivalResult] = useState<{
+    run: number;
+    best: number;
+    isNewBest: boolean;
+  } | null>(null);
   useEffect(() => {
     const cb = () => setRewardProgress(api.correctSinceReward());
     window.addEventListener("upsc-db-change", cb);
@@ -195,12 +204,107 @@ function QuizPage() {
     );
   }
 
+  const isSurvival = quiz.mode === "survival";
+
+  if (isSurvival && survivalOver && survivalResult) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="p-8 max-w-md w-full text-center">
+          <h1 className="font-display text-3xl font-semibold mb-2">Game Over</h1>
+          {survivalResult.isNewBest && (
+            <p className="text-primary font-semibold mb-2">New Best!</p>
+          )}
+          <div className="grid grid-cols-2 gap-4 my-6">
+            <div>
+              <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Current Run
+              </div>
+              <div className="font-display text-3xl nums mt-1">{survivalResult.run}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Best Run
+              </div>
+              <div className="font-display text-3xl nums mt-1">{survivalResult.best}</div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button onClick={() => navigate({ to: "/new", search: { mode: "survival" } })}>
+              Play Again
+            </Button>
+            <Button variant="ghost" onClick={() => navigate({ to: "/quiz-modes" })}>
+              Back to Quiz Modes
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   const total = quiz.question_count;
   const prevAnswer = quiz.answers[idx];
   const picked = selected ?? prevAnswer;
   const isRevealed = revealed || prevAnswer != null;
 
+  // Centralized Survival Mode handling: one dispatch point, one place that
+  // knows the Survival rules. Classic's pick() below is untouched.
+  const endSurvivalRun = (run: number) => {
+    const { best, isNewBest } = api.recordSurvivalRun(run);
+    setSurvivalResult({ run, best, isNewBest });
+    setSurvivalOver(true);
+  };
+
+  const survivalPick = (i: number) => {
+    if (isRevealed || survivalOver) return;
+    const flushed = flushElapsed(quiz);
+    activeIndicesRef.current.delete(idx);
+
+    setSelected(i);
+
+    const alreadyAnswered = flushed.answers[idx] != null;
+    const nextAnswers = [...flushed.answers];
+    nextAnswers[idx] = i;
+    const updated: Quiz = {
+      ...flushed,
+      answers: nextAnswers,
+      current_index: Math.max(flushed.current_index, idx),
+    };
+    api.saveQuiz(updated);
+    setQuiz(updated);
+
+    const correct = i === q.answerIndex;
+
+    // Wrong answer is immediate failure — one life, no continuing.
+    if (!correct) {
+      playSound("wrong");
+      api.recordWrong(q, quiz.title);
+      endSurvivalRun(idx);
+      return;
+    }
+
+    playSound("correct");
+    api.clearWrong(q);
+    if (!alreadyAnswered) api.bumpSolved(1);
+
+    // Correct answers transition directly to the next question — no
+    // reveal state, no explanation, no Next button, no delay.
+    if (idx + 1 >= total) {
+      endSurvivalRun(idx + 1);
+      return;
+    }
+    syncNow();
+    const nx = idx + 1;
+    const upd = { ...updated, current_index: Math.max(updated.current_index, nx) };
+    api.saveQuiz(upd);
+    setQuiz(upd);
+    setIdx(nx);
+  };
+
   const pick = (i: number) => {
+    if (isSurvival) {
+      survivalPick(i);
+      return;
+    }
     if (isRevealed) return;
     // Credit every active question (including this one) up to this exact
     // instant, then remove this question from the active set — its
@@ -417,7 +521,11 @@ function QuizPage() {
                 })}
               </div>
 
-              <div className="mt-5 mb-5 flex justify-between">
+              {/* Survival Mode has no Prev/Skip/Next controls at all — the
+                  Skip action is fully disabled, not just guarded, so a run
+                  can never end from an accidental tap. */}
+              {!isSurvival && (
+                <div className="mt-5 mb-5 flex justify-between">
   <Button variant="ghost" onClick={prev} disabled={idx <= 0}>
     <ArrowLeft className="mr-2 h-4 w-4" /> Prev
   </Button>
@@ -426,8 +534,9 @@ function QuizPage() {
     <ArrowRight className="ml-2 h-4 w-4" />
   </Button>
 </div>
+              )}
 
-{isRevealed && q.explanation && (
+{!isSurvival && isRevealed && q.explanation && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { cloneElement, isValidElement, useEffect, useState } from "react";
 import { lionAvatarUrl } from "@/lib/journey/assets";
 import { TOTAL_STORY_IMAGES } from "@/lib/journey";
@@ -412,6 +413,11 @@ style={{
 }}
     
     >
+      <Link
+    to="/profile"
+    className="absolute inset-0 z-20"
+    aria-label={`Open ${label}`}
+  />
       {/* Soft top sheen — a single restrained highlight rather than a glow,
           giving the pill a touch of glass depth. */}
       <div

@@ -221,7 +221,7 @@ const progress = chapter
               accent={!!inProg}
             />
             <ActionCard
-              to="/new"
+              to="/quiz-modes"
               icon={<PlusCircle className="h-5 w-5" />}
               title="Generate quiz"
               body="From your notes, or add new ones."

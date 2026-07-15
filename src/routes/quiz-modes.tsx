@@ -15,47 +15,57 @@ export const Route = createFileRoute("/quiz-modes")({
   component: QuizModesPage,
 });
 
-const MODES: Array<{
-  key: string;
+type QuizMode = {
+  id: string;
   title: string;
-  body: string;
+  description: string;
   icon: ReactNode;
-  available: boolean;
-}> = [
+  enabled: boolean;
+  route: string;
+  search?: Record<string, string>;
+};
+
+const QUIZ_MODES: QuizMode[] = [
   {
-    key: "classic",
+    id: "classic",
     title: "Classic Quiz",
-    body: "Standard UPSC-style MCQs generated from your notes.",
+    description: "Standard UPSC-style MCQs generated from your notes.",
     icon: <PlusCircle className="h-5 w-5" />,
-    available: true,
+    enabled: true,
+    route: "/new",
   },
   {
-    key: "daily",
+    id: "daily",
     title: "Daily Challenge",
-    body: "A curated set of questions, refreshed every day.",
+    description: "A curated set of questions, refreshed every day.",
     icon: <Flame className="h-5 w-5" />,
-    available: false,
+    enabled: false,
+    route: "/new",
   },
   {
-    key: "survival",
+    id: "survival",
     title: "Survival Mode",
-    body: "One life. Answer wrong and the run ends.",
+    description: "One life. Answer wrong and the run ends.",
     icon: <Shield className="h-5 w-5" />,
-    available: false,
+    enabled: true,
+    route: "/new",
+    search: { mode: "survival" },
   },
   {
-    key: "marathon",
+    id: "marathon",
     title: "Marathon Mode",
-    body: "A long-form run across every subject you've built.",
+    description: "A long-form run across every subject you've built.",
     icon: <InfinityIcon className="h-5 w-5" />,
-    available: false,
+    enabled: false,
+    route: "/new",
   },
   {
-    key: "timed",
+    id: "timed",
     title: "Timed UPSC Exam",
-    body: "Full-length, timed, exam-grade simulation.",
+    description: "Full-length, timed, exam-grade simulation.",
     icon: <Clock3 className="h-5 w-5" />,
-    available: false,
+    enabled: false,
+    route: "/new",
   },
 ];
 
@@ -73,17 +83,17 @@ function QuizModesPage() {
         </header>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {MODES.map((m) => {
-            const Wrapper: any = m.available ? "button" : "div";
+          {QUIZ_MODES.map((m) => {
+            const Wrapper: any = m.enabled ? "button" : "div";
             return (
               <Wrapper
-                key={m.key}
-                onClick={m.available ? () => navigate({ to: "/new" }) : undefined}
+                key={m.id}
+                onClick={m.enabled ? () => navigate({ to: m.route, search: m.search }) : undefined}
                 className="text-left w-full"
               >
                 <Card
                   className={`p-5 h-full shadow-sm transition-all ${
-                    m.available
+                    m.enabled
                       ? "hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
                       : "opacity-70"
                   }`}
@@ -91,13 +101,13 @@ function QuizModesPage() {
                   <div className="flex items-center gap-2.5 mb-2 text-primary">
                     {m.icon}
                     <h3 className="font-semibold text-foreground">{m.title}</h3>
-                    {!m.available && (
+                    {!m.enabled && (
                       <span className="ml-auto text-[10px] uppercase tracking-[0.18em] rounded-full border border-border/60 px-2 py-0.5 text-muted-foreground">
                         Coming soon
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{m.body}</p>
+                  <p className="text-sm text-muted-foreground">{m.description}</p>
                 </Card>
               </Wrapper>
             );
