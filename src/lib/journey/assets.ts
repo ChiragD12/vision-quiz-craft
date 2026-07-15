@@ -30,6 +30,8 @@ function firstUrl(mod: Record<string, unknown>): string | null {
 }
 
 function toUrlMap(mod: Record<string, unknown>): Record<string, string> {
+  console.log(mod);
+
   const out: Record<string, string> = {};
   for (const k of Object.keys(mod)) {
     const v = mod[k];
