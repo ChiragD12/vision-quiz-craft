@@ -47,27 +47,27 @@ function toUrlMap(mod: Record<string, unknown>): Record<string, string> {
 const chapterGlobs = {
   1: import.meta.glob(
     "../../assets/Secret-Folder/chapters/01-ancient-glory/*.{webp,png,jpg,jpeg}",
-    { eager: true, as: "url" },
+    { eager: true, import: "default" },
   ),
   2: import.meta.glob(
     "../../assets/Secret-Folder/chapters/02-golden-age/*.{webp,png,jpg,jpeg}",
-    { eager: true, as: "url" },
+    { eager: true, import: "default" },
   ),
   3: import.meta.glob(
     "../../assets/Secret-Folder/chapters/03-trouble-begins/*.{webp,png,jpg,jpeg}",
-    { eager: true, as: "url" },
+    { eager: true, import: "default" },
   ),
   4: import.meta.glob(
     "../../assets/Secret-Folder/chapters/04-long-night/*.{webp,png,jpg,jpeg}",
-    { eager: true, as: "url" },
+    { eager: true, import: "default" },
   ),
   5: import.meta.glob(
     "../../assets/Secret-Folder/chapters/05-final-blow/*.{webp,png,jpg,jpeg}",
-    { eager: true, as: "url" },
+    { eager: true, import: "default" },
   ),
   6: import.meta.glob(
     "../../assets/Secret-Folder/chapters/06-bharat-rising/*.{webp,png,jpg,jpeg}",
-    { eager: true, as: "url" },
+    { eager: true, import: "default" },
   ),
 } as const;
 
@@ -158,7 +158,7 @@ console.log(
 const chapterCovers = toUrlMap(
   import.meta.glob(
     "../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}",
-    { eager: true, as: "url" },
+    { eager: true, import: "default" },
   ),
 );
 
