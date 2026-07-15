@@ -174,7 +174,15 @@ const avatars = toUrlMap(
 
 export function lionAvatarUrl(stageId: number): string {
   const suffix = String(stageId + 1).padStart(2, "0"); // stage 0 -> lion-01
-  const hit = Object.keys(avatars).find((k) => k.includes(`lion-${suffix}`));
+  const hit = Object.keys(avatars).find((k) => {
+  const n = k.toLowerCase();
+  return (
+    n.endsWith(`lion-${suffix}.png`) ||
+    n.endsWith(`lion-${suffix}.webp`) ||
+    n.endsWith(`lion-${suffix}.jpg`) ||
+    n.endsWith(`lion-${suffix}.jpeg`)
+  );
+});
   if (hit) return avatars[hit];
   const any = firstUrl(avatars);
   return any ?? PLACEHOLDER;
