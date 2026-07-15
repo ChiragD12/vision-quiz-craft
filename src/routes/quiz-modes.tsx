@@ -1,6 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppBackground } from "@/components/app-background";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PlusCircle, Flame, Shield, Infinity as InfinityIcon, Clock3 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -23,7 +25,10 @@ type QuizMode = {
   enabled: boolean;
   route: string;
   search?: Record<string, string>;
+  needsSelection?: boolean;
 };
+
+const MARATHON_COUNTS = [100, 250, 500, 1000] as const;
 
 const QUIZ_MODES: QuizMode[] = [
   {
@@ -37,10 +42,11 @@ const QUIZ_MODES: QuizMode[] = [
   {
     id: "daily",
     title: "Daily Challenge",
-    description: "A curated set of questions, refreshed every day.",
+    description: "20 questions, refreshed every day.",
     icon: <Flame className="h-5 w-5" />,
-    enabled: false,
+    enabled: true,
     route: "/new",
+    search: { mode: "daily" },
   },
   {
     id: "survival",
@@ -56,21 +62,64 @@ const QUIZ_MODES: QuizMode[] = [
     title: "Marathon Mode",
     description: "A long-form run across every subject you've built.",
     icon: <InfinityIcon className="h-5 w-5" />,
-    enabled: false,
+    enabled: true,
     route: "/new",
+    needsSelection: true,
   },
   {
     id: "timed",
     title: "Timed UPSC Exam",
     description: "Full-length, timed, exam-grade simulation.",
     icon: <Clock3 className="h-5 w-5" />,
-    enabled: false,
+    enabled: true,
     route: "/new",
+    search: { mode: "timed" },
   },
 ];
 
 function QuizModesPage() {
   const navigate = useNavigate();
+  const [showMarathonPicker, setShowMarathonPicker] = useState(false);
+
+  if (showMarathonPicker) {
+    return (
+      <div className="relative min-h-dvh overflow-x-hidden">
+        <AppBackground />
+        <div className="mx-auto max-w-4xl px-5 pt-20 pb-16 space-y-6">
+          <header className="page-header-card">
+            <h1 className="font-display text-3xl font-semibold tracking-tight">Marathon Mode</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Choose how many questions you want in this run.
+            </p>
+          </header>
+
+          <Card className="p-5 space-y-4">
+            <h2 className="font-semibold">Number of questions</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {MARATHON_COUNTS.map((c) => (
+                <Button
+                  key={c}
+                  variant="secondary"
+                  onClick={() =>
+                    navigate({
+                      to: "/new",
+                      search: { mode: "marathon", marathonCount: String(c) },
+                    })
+                  }
+                >
+                  {c} Questions
+                </Button>
+              ))}
+            </div>
+            <Button variant="ghost" className="w-full" onClick={() => setShowMarathonPicker(false)}>
+              Back to Quiz Modes
+            </Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-dvh overflow-x-hidden">
       <AppBackground />
@@ -88,7 +137,14 @@ function QuizModesPage() {
             return (
               <Wrapper
                 key={m.id}
-                onClick={m.enabled ? () => navigate({ to: m.route, search: m.search }) : undefined}
+                onClick={
+                  m.enabled
+                    ? () =>
+                        m.needsSelection
+                          ? setShowMarathonPicker(true)
+                          : navigate({ to: m.route, search: m.search })
+                    : undefined
+                }
                 className="text-left w-full"
               >
                 <Card

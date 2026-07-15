@@ -19,6 +19,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { currentLion } from "@/lib/journey";
+import { api } from "@/lib/store";
 
 // ---------------------------------------------------------------------------
 // Edge navigation — Apple / visionOS inspired floating capsule menu.
@@ -39,14 +41,14 @@ export function useEdgeNav() {
   if (!c) throw new Error("useEdgeNav must be used inside <EdgeNavProvider>");
   return c;
 }
-
+const lion = currentLion(api.unlockedImageCount());
 const CAPSULES: Array<{
   to: string;
   label: string;
   hint: string;
   icon: ReactNode;
 }> = [
-  { to: "/profile", label: "Profile", hint: "Your hero, your journey", icon: <User className="h-5 w-5" /> },
+  { to: "/profile", label: lion.name, hint: "Your Journey", icon: <User className="h-5 w-5" /> },
   { to: "/quiz-modes", label: "Quiz Modes", hint: "Classic · Daily · Survival", icon: <Layers className="h-5 w-5" /> },
   { to: "/spaced-revision", label: "Spaced Revision", hint: "Revisit at the right time", icon: <CalendarClock className="h-5 w-5" /> },
   { to: "/rewards", label: "Rewards", hint: "Milestones & achievements", icon: <Trophy className="h-5 w-5" /> },
@@ -219,8 +221,8 @@ function EdgeNavOverlay() {
           {/* Capsule stack */}
           <div className="relative h-full w-full pointer-events-none">
             <div
-              className="absolute left-3 sm:left-5 top-20 flex flex-col gap-3 pointer-events-auto"
-              style={{ maxWidth: "min(84vw, 320px)" }}
+              className="absolute left-5 top-20 flex flex-col gap-7 pointer-events-auto"
+              style={{ width: "68vw", maxWidth: "460px" }}
             >
               {CAPSULES.map((c, i) => (
                 <motion.div
@@ -261,7 +263,7 @@ function NavCapsule({
   return (
     <Link
       to={to as any}
-      className="group relative flex items-center gap-3 rounded-full pl-4 pr-6 py-3 overflow-hidden"
+      className="group relative flex w-full items-center gap-5 rounded-full pl-6 pr-10 py-2 overflow-hidden"
       style={{
         border: "1px solid rgba(212,178,88,0.35)",
         background:
@@ -282,14 +284,14 @@ function NavCapsule({
           mixBlendMode: "overlay",
         }}
       />
-      <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-black/20 text-amber-100 ring-1 ring-white/10">
+      <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-black/20 text-amber-100 ring-1 ring-white/10">
         {icon}
       </span>
-      <span className="relative flex-1 min-w-0">
-        <span className="block font-display text-[15px] font-semibold text-white leading-tight tracking-tight">
+      <span className="relative flex-1 min-w-0 space-y-1">
+        <span className="block font-display text-[18px] font-semibold text-white leading-none tracking-wide">
           {label}
         </span>
-        <span className="block text-[11px] text-amber-100/70 truncate leading-tight mt-0.5">
+        <span className="block text-[12px] text-amber-100/75 truncate leading-relaxed mt-1">
           {hint}
         </span>
       </span>

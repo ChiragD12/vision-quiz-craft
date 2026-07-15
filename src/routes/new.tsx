@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api, type Quiz } from "@/lib/store";
 import { extractNotes, generateMCQs } from "@/lib/gemini";
 import { normalizeName } from "@/domain/subjects";
+import { todayKey } from "@/domain/streak";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -23,16 +24,42 @@ type NewQuizSearch = {
   subjectId?: string;
   topicId?: string;
   autoGenerate?: boolean;
-  mode?: "classic" | "survival";
+  mode?: "classic" | "survival" | "marathon" | "timed" | "daily";
+  marathonCount?: 100 | 250 | 500 | 1000;
+  // Set only when this quiz was launched via the Review button on the
+  // Spaced Revision page. Passed straight through as a search param so no
+  // second quiz engine or global flag is needed.
+  revisionReview?: boolean;
 };
+
+const MARATHON_COUNTS = [100, 250, 500, 1000] as const;
+const TIMED_QUESTION_COUNT = 100;
+const TIMED_DURATION_MS = 120 * 60 * 1000;
+const DAILY_QUESTION_COUNT = 20;
 
 export const Route = createFileRoute("/new")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>): NewQuizSearch => ({
-    subjectId: typeof search.subjectId === "string" ? search.subjectId : undefined,
-    topicId: typeof search.topicId === "string" ? search.topicId : undefined,
-    mode: search.mode === "survival" ? "survival" : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): NewQuizSearch => {
+    const mc = Number(search.marathonCount);
+    return {
+      subjectId: typeof search.subjectId === "string" ? search.subjectId : undefined,
+      topicId: typeof search.topicId === "string" ? search.topicId : undefined,
+      mode:
+        search.mode === "survival"
+          ? "survival"
+          : search.mode === "marathon"
+            ? "marathon"
+            : search.mode === "timed"
+              ? "timed"
+              : search.mode === "daily"
+                ? "daily"
+                : undefined,
+      marathonCount: (MARATHON_COUNTS as readonly number[]).includes(mc)
+        ? (mc as 100 | 250 | 500 | 1000)
+        : undefined,
+      revisionReview: search.revisionReview === true || search.revisionReview === "true",
+    };
+  },
   head: () => ({ meta: [{ title: "Generate Quiz — UPSC Revision" }] }),
   component: NewQuizPage,
 });
@@ -51,10 +78,32 @@ function fileToDataUrl(f: File): Promise<string> {
 }
 
 function NewQuizPage() {
-  const { subjectId: initialSubjectId, topicId: initialTopicId, mode } = Route.useSearch();
+  const {
+    subjectId: initialSubjectId,
+    topicId: initialTopicId,
+    mode,
+    marathonCount,
+    revisionReview,
+  } = Route.useSearch();
   const isSurvival = mode === "survival";
+  const isMarathon = mode === "marathon";
+  const isTimed = mode === "timed";
+  const isDaily = mode === "daily";
   const navigate = useNavigate();
   const subjects = api.allSubjects();
+
+  // Daily Challenge identity: only one may exist per calendar day. If
+  // today's Daily Challenge already exists (in progress or completed),
+  // jump straight into it instead of generating another. If the day has
+  // rolled over since the last one, no match is found and the form below
+  // proceeds to generate a fresh Daily Challenge as normal.
+  useEffect(() => {
+    if (!isDaily) return;
+    const existing = api.getDailyChallenge();
+    if (existing) {
+      navigate({ to: "/quiz/$id", params: { id: existing.id }, replace: true });
+    }
+  }, [isDaily, navigate]);
 
   const [subjectId, setSubjectId] = useState<string>(initialSubjectId ?? "");
   const [newSubject, setNewSubject] = useState("");
@@ -171,14 +220,23 @@ function NewQuizPage() {
         .join("\n\n---\n\n");
       if (!notes.trim()) throw new Error("No notes stored for this topic yet.");
 
-      setBusy(`Generating ${count} UPSC MCQs…`);
+      const effectiveCount = isMarathon && marathonCount
+        ? marathonCount
+        : isTimed
+          ? TIMED_QUESTION_COUNT
+          : isDaily
+            ? DAILY_QUESTION_COUNT
+            : count;
+
+      setBusy(`Generating ${effectiveCount} UPSC MCQs…`);
       feedback(FEEDBACK.LOADING);
       const questions = await generateMCQs({
         notes,
-        count,
+        count: effectiveCount,
         topicName: `${sub.name} — ${topic.name}`,
       });
 
+      const createdAt = Date.now();
       const quiz: Quiz = {
         id: crypto.randomUUID(),
         title: `${sub.name} — ${topic.name}`,
@@ -190,8 +248,20 @@ function NewQuizPage() {
         per_q_seconds: new Array(questions.length).fill(0),
         current_index: 0,
         status: "in_progress",
-        created_at: Date.now(),
-        mode: isSurvival ? "survival" : "classic",
+        created_at: createdAt,
+        mode: isSurvival
+          ? "survival"
+          : isMarathon
+            ? "marathon"
+            : isTimed
+              ? "timed"
+              : isDaily
+                ? "daily"
+                : "classic",
+        ...(isMarathon && marathonCount ? { marathonCount } : {}),
+        ...(isTimed ? { timed_deadline: createdAt + TIMED_DURATION_MS } : {}),
+        ...(isDaily ? { daily_date: todayKey() } : {}),
+        ...(revisionReview ? { revisionReview: true } : {}),
       };
       api.saveQuiz(quiz);
       setBusy(null);
@@ -340,26 +410,37 @@ return (
         </Card>
 
         <Card className="p-5">
-          <h2 className="font-semibold mb-3">Number of questions</h2>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {COUNTS.map((c) => (
-              <Button
-                key={c}
-                size="sm"
-                variant={c === count ? "default" : "secondary"}
-                onClick={() => setCount(c)}
-              >
-                {c}
-              </Button>
-            ))}
-          </div>
+          {!isMarathon && !isDaily && (
+            <>
+              <h2 className="font-semibold mb-3">Number of questions</h2>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {COUNTS.map((c) => (
+                  <Button
+                    key={c}
+                    size="sm"
+                    variant={c === count ? "default" : "secondary"}
+                    onClick={() => setCount(c)}
+                  >
+                    {c}
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
           <Button className="w-full" disabled={!!busy} onClick={generate}>
             {busy ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Sparkles className="mr-2 h-4 w-4" />
             )}
-            {busy ?? `Generate ${count} questions`}
+            {busy ??
+              `Generate ${
+                isMarathon && marathonCount
+                  ? marathonCount
+                  : isDaily
+                    ? DAILY_QUESTION_COUNT
+                    : count
+              } questions`}
           </Button>
           <p className="mt-3 text-xs text-muted-foreground text-center">
             UPSC scoring: +2 correct, −0.66 wrong.

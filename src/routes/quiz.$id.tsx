@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { api, type MCQ, type Quiz } from "@/lib/store";
+import { api, REVISION_SCHEDULE_DAYS, type MCQ, type Quiz, type TopicRevision } from "@/lib/store";
 import { QuizTimer } from "@/components/quiz-timer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -18,6 +18,16 @@ export const Route = createFileRoute("/quiz/$id")({
   ssr: false,
   component: QuizPage,
 });
+
+// Local-date-safe day count from today to a "YYYY-MM-DD" due date (same
+// format todayKey() produces), used only for the Revision Complete card.
+function daysUntil(dateKey: string): number {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
 
 function QuizPage() {
   const { id } = Route.useParams();
@@ -37,6 +47,15 @@ function QuizPage() {
     best: number;
     isNewBest: boolean;
   } | null>(null);
+  // Timed UPSC Exam: countdown driven off the fixed deadline stored on the
+  // Quiz object itself (quiz.timed_deadline) — no global/module variables.
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  // Spaced Revision: after a revisionReview quiz completes, hold the
+  // updated schedule here instead of navigating immediately, so a
+  // "Revision Complete" card can be shown first (Continue proceeds to the
+  // existing results page, unchanged).
+  const [revisionResult, setRevisionResult] = useState<TopicRevision | null>(null);
+  const submittedRef = useRef(false);
   useEffect(() => {
     const cb = () => setRewardProgress(api.correctSinceReward());
     window.addEventListener("upsc-db-change", cb);
@@ -80,6 +99,10 @@ function QuizPage() {
     return { ...currentQuiz, per_q_seconds: perQ };
   };
 
+  // Timed UPSC Exam flag, computed early (before any early return) so the
+  // countdown effect below can use it safely on every render.
+  const isTimed = quiz?.mode === "timed";
+
   // Flush-and-persist helper for call sites that only need to sync time
   // (no accompanying answer/index change): the periodic tick, tab
   // visibility changes, navigation, and unmount.
@@ -91,6 +114,49 @@ function QuizPage() {
       api.saveQuiz(flushed);
       setQuiz(flushed);
     }
+  };
+
+  // Grades every answered question at once, applies the same negative
+  // marking / wrong-answer / streak bookkeeping Classic Quiz uses per pick,
+  // marks the quiz completed, then hands off to the existing results page —
+  // which is the only place explanations/correct answers are revealed.
+  const submitExam = () => {
+    if (submittedRef.current) return;
+    const cq = quizRef.current;
+    if (!cq) return;
+    submittedRef.current = true;
+    syncNow();
+    let correctCount = 0;
+    cq.questions.forEach((qq, i) => {
+      const ans = cq.answers[i];
+      if (ans == null) return;
+      if (ans === qq.answerIndex) {
+        correctCount++;
+        api.clearWrong(qq);
+      } else {
+        api.recordWrong(qq, cq.title);
+      }
+    });
+    if (correctCount > 0) api.bumpSolved(correctCount);
+    playSound("quiz-complete");
+    const done: Quiz = {
+      ...cq,
+      status: "completed",
+      completed_at: Date.now(),
+    };
+    api.saveQuiz(done);
+    // Spaced Revision: only a quiz launched from the Review button on the
+    // Spaced Revision page (revisionReview === true) advances the topic's
+    // revision schedule. A Timed exam is never the "first Classic Quiz
+    // completion" that starts a schedule, so no begin-schedule call here.
+    if (cq.topic_id && cq.revisionReview && cq.status !== "completed") {
+      const tr = api.markTopicRevised(cq.topic_id);
+      if (tr) {
+        setRevisionResult(tr);
+        return;
+      }
+    }
+    navigate({ to: "/result/$id", params: { id } });
   };
 
   // (Re)build the active set whenever a genuinely different quiz loads:
@@ -150,6 +216,24 @@ function QuizPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Timed UPSC Exam: a hard wall-clock countdown to quiz.timed_deadline,
+  // independent of tab visibility (a real exam clock doesn't pause). Once
+  // it reaches zero, the exam is auto-submitted exactly once.
+  useEffect(() => {
+    if (!isTimed) return;
+    const tick = () => {
+      const dl = quizRef.current?.timed_deadline;
+      if (!dl) return;
+      const remaining = Math.max(0, Math.round((dl - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) submitExam();
+    };
+    tick();
+    const t = window.setInterval(tick, 1000);
+    return () => window.clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTimed, quiz?.id]);
+
   // Rule 3: time only counts while the user is actively inside this quiz.
   // Going hidden (switching tabs, backgrounding the app/PWA) flushes
   // whatever's accrued up to that instant and then the interval above
@@ -206,6 +290,41 @@ function QuizPage() {
 
   const isSurvival = quiz.mode === "survival";
 
+  if (revisionResult) {
+    const stage = revisionResult.stage;
+    const nextStageLabel =
+      stage < REVISION_SCHEDULE_DAYS.length
+        ? `Day ${REVISION_SCHEDULE_DAYS[stage]}`
+        : "Schedule complete";
+    const dueInDays = revisionResult.next_due_date
+      ? daysUntil(revisionResult.next_due_date)
+      : null;
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="p-8 max-w-md w-full text-center">
+          <h1 className="font-display text-3xl font-semibold mb-2">Revision Complete</h1>
+          <div className="my-6">
+            <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Next Review
+            </div>
+            <div className="font-display text-2xl mt-1">{nextStageLabel}</div>
+            {dueInDays !== null && (
+              <div className="text-sm text-muted-foreground mt-1">
+                Due in {dueInDays} day{dueInDays === 1 ? "" : "s"}
+              </div>
+            )}
+          </div>
+          <Button
+            className="w-full"
+            onClick={() => navigate({ to: "/result/$id", params: { id } })}
+          >
+            Continue
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   if (isSurvival && survivalOver && survivalResult) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -244,7 +363,9 @@ function QuizPage() {
   const total = quiz.question_count;
   const prevAnswer = quiz.answers[idx];
   const picked = selected ?? prevAnswer;
-  const isRevealed = revealed || prevAnswer != null;
+  // Timed exam: never reveal correctness while the exam is in progress, so
+  // options stay clickable (the answer can be changed) with no colour cues.
+  const isRevealed = isTimed ? false : revealed || prevAnswer != null;
 
   // Centralized Survival Mode handling: one dispatch point, one place that
   // knows the Survival rules. Classic's pick() below is untouched.
@@ -300,9 +421,40 @@ function QuizPage() {
     setIdx(nx);
   };
 
+  // Timed UPSC Exam: selecting an option only records the answer — no
+  // reveal, no correct/wrong sound, no explanation, and it can be changed
+  // freely before moving on, exactly like a real exam. Wrong/streak
+  // bookkeeping is deferred entirely to submitExam() so nothing about
+  // correctness leaks while the exam is in progress.
+  const timedPick = (i: number) => {
+    if (submittedRef.current) return;
+    const flushed = flushElapsed(quiz);
+    setSelected(i);
+    const nextAnswers = [...flushed.answers];
+    nextAnswers[idx] = i;
+    const updated: Quiz = {
+      ...flushed,
+      answers: nextAnswers,
+      current_index: Math.max(flushed.current_index, idx),
+    };
+    api.saveQuiz(updated);
+    setQuiz(updated);
+  };
+
+  // Grades every answered question at once, applies the same negative
+  // marking / wrong-answer / streak bookkeeping Classic Quiz uses per pick,
+  // marks the quiz completed, then hands off to the existing results page —
+  // which is the only place explanations/correct answers are revealed.
+  // (submitExam itself is defined earlier, before the early-return guards,
+  // so the countdown effect can call it safely.)
+
   const pick = (i: number) => {
     if (isSurvival) {
       survivalPick(i);
+      return;
+    }
+    if (isTimed) {
+      timedPick(i);
       return;
     }
     if (isRevealed) return;
@@ -369,6 +521,24 @@ function QuizPage() {
         current_index: total - 1,
       };
       api.saveQuiz(done);
+      // Spaced Revision: a quiz launched from the Review button on the
+      // Spaced Revision page (revisionReview === true) advances the
+      // topic's revision schedule. Otherwise, the first successful
+      // completion of a normal Classic Quiz for a topic that hasn't yet
+      // entered the revision system starts its schedule (Day 1 due) —
+      // this never happens for Marathon/Daily, and never re-triggers for
+      // a topic that already has a TopicRevision.
+      if (cq.topic_id && cq.status !== "completed") {
+        if (cq.revisionReview) {
+          const tr = api.markTopicRevised(cq.topic_id);
+          if (tr) {
+            setRevisionResult(tr);
+            return;
+          }
+        } else if (cq.mode === "classic" || cq.mode == null) {
+          api.beginTopicRevisionSchedule(cq.topic_id);
+        }
+      }
       navigate({ to: "/result/$id", params: { id } });
     } else {
       playSound("click");
@@ -403,7 +573,14 @@ function QuizPage() {
               </span>
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
-              <QuizTimer seconds={quiz.per_q_seconds?.[idx] ?? 0} />
+              {isTimed ? (
+                <span className="font-display text-sm nums text-muted-foreground">
+                  {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:
+                  {String(secondsLeft % 60).padStart(2, "0")}
+                </span>
+              ) : (
+                <QuizTimer seconds={quiz.per_q_seconds?.[idx] ?? 0} />
+              )}
               <span className="hidden sm:block h-5 w-px bg-border" aria-hidden="true" />
               <Button
                 variant="ghost"
@@ -470,6 +647,12 @@ function QuizPage() {
                   const isPicked = i === picked;
                   const showCorrect = isRevealed && isCorrect;
                   const showWrong = isRevealed && isPicked && !isCorrect;
+                  // Timed UPSC Exam: never reveal correct/incorrect, but keep
+                  // the user's chosen option highlighted (orange
+                  // selected-answer styling) until they move to another
+                  // question. `picked` already tracks per-question answers
+                  // via quiz.answers[idx], so this persists across Prev/Next.
+                  const showTimedPicked = isTimed && isPicked;
                   return (
                     <motion.button
                       key={i}
@@ -496,12 +679,14 @@ function QuizPage() {
                         !isRevealed && "hover:border-primary/50 hover:bg-muted hover:shadow-md cursor-pointer",
                         showCorrect && "border-success/60 bg-success/10 shadow-[0_0_0_1px_hsl(var(--success)/0.4),0_0_18px_hsl(var(--success)/0.25)]",
                         showWrong && "border-destructive/60 bg-destructive/10",
+                        showTimedPicked && "border-primary/60 bg-primary/10 shadow-[0_0_0_1px_hsl(var(--primary)/0.4),0_0_18px_hsl(var(--primary)/0.25)]",
                       )}
                     >
                       <span
                         className={cn(
                           "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm font-semibold",
-                          !isRevealed && "border-border bg-muted",
+                          !isRevealed && !showTimedPicked && "border-border bg-muted",
+                          showTimedPicked && "border-primary bg-primary/15 text-primary",
                           showCorrect && "border-success bg-success text-success-foreground",
                           showWrong &&
                             "border-destructive bg-destructive text-destructive-foreground",
@@ -529,8 +714,8 @@ function QuizPage() {
   <Button variant="ghost" onClick={prev} disabled={idx <= 0}>
     <ArrowLeft className="mr-2 h-4 w-4" /> Prev
   </Button>
-  <Button onClick={next}>
-    {idx + 1 === total ? "Finish quiz" : "Next"}
+  <Button onClick={isTimed && idx + 1 === total ? submitExam : next}>
+    {isTimed && idx + 1 === total ? "Submit Exam" : idx + 1 === total ? "Finish quiz" : "Next"}
     <ArrowRight className="ml-2 h-4 w-4" />
   </Button>
 </div>

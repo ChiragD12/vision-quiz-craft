@@ -30,6 +30,7 @@ import {
   Layers,
   BarChart3,
   BookmarkCheck,
+  CalendarClock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -73,6 +74,7 @@ function HomePage() {
   const recent = api.recentQuizzes(5).filter((q) => q.status === "completed");
   const rewardProgress = api.correctSinceReward();
   const solvedToday = api.solvedToday();
+  const dueRevisions = api.dueRevisionCount();
 
 // Journey selectors
 const unlockCount = api.unlockedImageCount();
@@ -204,8 +206,38 @@ const progress = chapter
           </Card>
         )}
 
+        {dueRevisions > 0 && (
+          <div className="flex justify-end">
+            <Link
+              to="/spaced-revision"
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm transition-all hover:bg-primary/15 hover:border-primary/40"
+            >
+              <CalendarClock className="h-3.5 w-3.5" />
+              {dueRevisions} {dueRevisions === 1 ? "Revision" : "Revisions"} Due
+            </Link>
+          </div>
+        )}
+
         <section>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {dueRevisions > 0 && (
+              <Card className="p-5 h-full shadow-sm border-primary/30 bg-primary/5">
+                <div className="flex items-center gap-2.5 mb-2 text-primary">
+                  <CalendarClock className="h-5 w-5" />
+                  <h3 className="font-semibold text-foreground">Spaced Revision</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {dueRevisions} {dueRevisions === 1 ? "Topic" : "Topics"} Due
+                </p>
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => navigate({ to: "/spaced-revision" })}
+                >
+                  Review Now
+                </Button>
+              </Card>
+            )}
             <ActionCard
               onClick={() => {
                 if (inProg) navigate({ to: "/quiz/$id", params: { id: inProg.id } });

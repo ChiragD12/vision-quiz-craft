@@ -43,7 +43,7 @@ export type MCQ = {
   difficulty?: "Easy" | "Medium" | "Hard";
 };
 
-export type QuizMode = "classic" | "survival";
+export type QuizMode = "classic" | "survival" | "marathon" | "timed" | "daily";
 
 export type Quiz = {
   id: string;
@@ -63,6 +63,21 @@ export type Quiz = {
   // Centralized mode flag the quiz engine checks to switch behaviour.
   // Absent/"classic" preserves today's behaviour exactly.
   mode?: QuizMode;
+  // Marathon Mode: the selected run length (100/250/500/1000), stored on
+  // the quiz itself rather than any global/module-level variable.
+  marathonCount?: 100 | 250 | 500 | 1000;
+  // Timed UPSC Exam: absolute epoch-ms deadline (created_at + 120 minutes),
+  // stored on the quiz itself so the countdown survives reloads.
+  timed_deadline?: number;
+  // Daily Challenge: the calendar day (local, "YYYY-MM-DD" via todayKey())
+  // this quiz belongs to. Stored on the quiz itself — no global/module-level
+  // state — so "one Daily Challenge per day" can be derived by lookup.
+  daily_date?: string;
+  // Spaced Revision: set only on quizzes launched via the Review button on
+  // the Spaced Revision page. Only these quizzes advance a topic's
+  // revision schedule on completion — a normal Classic/Survival/Marathon/
+  // Timed/Daily quiz on the same topic must never do so.
+  revisionReview?: boolean;
 };
 
 export type WrongAnswer = {
@@ -70,6 +85,30 @@ export type WrongAnswer = {
   question: MCQ;
   topic_name?: string;
   created_at: number;
+};
+
+// ---------- Spaced Revision ----------
+// Fixed schedule (in days) every completed topic follows. Index 0 = Day 1,
+// index 5 = Day 59. This is the entire scheduling rule set — no adaptive
+// logic, no notifications.
+export const REVISION_SCHEDULE_DAYS = [1, 3, 7, 14, 30, 59] as const;
+
+export type TopicRevision = {
+  topic_id: string;
+  // Index into REVISION_SCHEDULE_DAYS for the stage that is currently next
+  // due. 0 = Day 1 is next, ... 5 = Day 59 is next, 6 = schedule finished
+  // (every stage has been completed at least once).
+  stage: number;
+  // Stage indices (into REVISION_SCHEDULE_DAYS) that have been completed.
+  completed_stages: number[];
+  // "YYYY-MM-DD" (todayKey format) of the next scheduled revision.
+  // Absent once the whole schedule (through Day 59) has been completed.
+  next_due_date?: string;
+  // "YYYY-MM-DD" of the most recent day this topic was revised, if any.
+  last_revised_date?: string;
+  last_revised_at?: number;
+  // Completed revision sessions for this topic, most recent first.
+  history: { stage: number; completed_at: number }[];
 };
 
 export type Bookmark = {
@@ -90,6 +129,8 @@ export type DB = {
   bookmarks: Bookmark[];
   wrong_answers: WrongAnswer[];
   streak?: StreakDay[];
+  // Spaced Revision: one entry per topic that has ever been revised.
+  topic_revisions?: TopicRevision[];
   gemini_api_key: string;
   gemini_model: string;
 };
@@ -107,6 +148,7 @@ const defaultDB = (): DB => ({
   bookmarks: [],
   wrong_answers: [],
   streak: [],
+  topic_revisions: [],
   gemini_api_key: "",
   gemini_model: "gemini-2.5-flash",
 });
@@ -169,6 +211,7 @@ export function load(): DB {
   const parsed = safeParse<DB>(localStorage.getItem(KEY));
   const db = parsed ?? defaultDB();
   if (!db.streak) db.streak = [];
+  if (!db.topic_revisions) db.topic_revisions = [];
   const changed = seedCore(db);
   const key = localStorage.getItem(KEY_APIKEY);
   if (key) db.gemini_api_key = key;
@@ -452,6 +495,107 @@ export const api = {
       .slice(0, limit);
   },
 
+  // Returns today's Daily Challenge quiz if one already exists (in_progress
+  // or completed), so callers can reopen/resume it instead of generating a
+  // duplicate. Only one Daily Challenge may exist per calendar day; when the
+  // day rolls over, no quiz will match today's key and a fresh one is made.
+  getDailyChallenge(): Quiz | undefined {
+    const key = todayKey();
+    return load().quizzes.find((q) => q.mode === "daily" && q.daily_date === key);
+  },
+
+  // ----- Spaced Revision
+  // Small lookups reused by the Spaced Revision page to join a
+  // TopicRevision back to its Topic/Subject for display.
+  getTopic(id: string): Topic | undefined {
+    return load().topics.find((t) => t.id === id);
+  },
+  getSubject(id: string): Subject | undefined {
+    return load().subjects.find((s) => s.id === id);
+  },
+  getTopicRevision(topicId: string): TopicRevision | undefined {
+    return (load().topic_revisions ?? []).find((r) => r.topic_id === topicId);
+  },
+  allTopicRevisions(): TopicRevision[] {
+    return (load().topic_revisions ?? []).slice();
+  },
+  // Count of TopicRevision records whose next_due_date is today or earlier.
+  // Used by the Home page badge/card — string comparison is safe since
+  // next_due_date and todayKey() both use the "YYYY-MM-DD" format.
+  dueRevisionCount(): number {
+    const key = todayKey();
+    return (load().topic_revisions ?? []).filter(
+      (r) => r.next_due_date && r.next_due_date <= key,
+    ).length;
+  },
+  // Called on the first successful completion of a normal Classic Quiz for
+  // a topic that has never entered the revision system. Creates the
+  // TopicRevision record at stage 0 with Day 1 scheduled as next due — it
+  // does NOT advance the stage or log a history entry (this isn't a
+  // completed revision session, just enrollment). No-op if the topic
+  // already has a TopicRevision, so later Classic Quiz completions on the
+  // same topic never reset or re-trigger it.
+  beginTopicRevisionSchedule(topicId: string): TopicRevision {
+    let result!: TopicRevision;
+    update((db) => {
+      const list = db.topic_revisions ?? (db.topic_revisions = []);
+      let tr = list.find((r) => r.topic_id === topicId);
+      if (!tr) {
+        const due = new Date();
+        due.setDate(due.getDate() + REVISION_SCHEDULE_DAYS[0]);
+        tr = {
+          topic_id: topicId,
+          stage: 0,
+          completed_stages: [],
+          next_due_date: todayKey(due),
+          history: [],
+        };
+        list.push(tr);
+      }
+      result = tr;
+    });
+    return result;
+  },
+  // Called only when a quiz launched from the Spaced Revision page
+  // (revisionReview === true) is completed. Advances the topic to its next
+  // scheduled stage in REVISION_SCHEDULE_DAYS and recalculates
+  // next_due_date from today. Assumes the topic already has a
+  // TopicRevision (created via beginTopicRevisionSchedule); if it somehow
+  // doesn't, this is a no-op — normal quizzes must never be able to create
+  // or advance a schedule through this path.
+  markTopicRevised(topicId: string): TopicRevision | undefined {
+    const key = todayKey();
+    let result: TopicRevision | undefined;
+    update((db) => {
+      const list = db.topic_revisions ?? (db.topic_revisions = []);
+      const tr = list.find((r) => r.topic_id === topicId);
+      if (!tr) return;
+      tr.last_revised_at = Date.now();
+      tr.last_revised_date = key;
+      const completedStage = tr.stage;
+      if (completedStage < REVISION_SCHEDULE_DAYS.length) {
+        tr.history.unshift({ stage: completedStage, completed_at: Date.now() });
+        tr.history = tr.history.slice(0, 30);
+        if (!tr.completed_stages.includes(completedStage)) {
+          tr.completed_stages = [...tr.completed_stages, completedStage];
+        }
+        const nextStage = completedStage + 1;
+        tr.stage = nextStage;
+        if (nextStage < REVISION_SCHEDULE_DAYS.length) {
+          const due = new Date();
+          due.setDate(due.getDate() + REVISION_SCHEDULE_DAYS[nextStage]);
+          tr.next_due_date = todayKey(due);
+        } else {
+          tr.next_due_date = undefined;
+        }
+      }
+      // else: schedule already finished — today's revision is still
+      // recorded above, but there's no further stage to advance to.
+      result = tr;
+    });
+    return result;
+  },
+
   // ----- Survival Mode (best run, local-only — same storage pattern as
   // correctSinceReward/unlockedImageCount above)
   getSurvivalBest(): number {
@@ -642,6 +786,7 @@ export const api = {
       if (parsed.bookmarks) db.bookmarks = parsed.bookmarks;
       if (parsed.wrong_answers) db.wrong_answers = parsed.wrong_answers;
       if (parsed.streak) db.streak = parsed.streak;
+      if (parsed.topic_revisions) db.topic_revisions = parsed.topic_revisions;
     });
   },
 };
