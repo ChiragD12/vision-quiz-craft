@@ -147,10 +147,12 @@ export function storyImageUrl(storyId: number): string {
 
 console.log(
   "CHAPTER COVERS",
-  import.meta.glob("../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}", {
-    eager: true,
-    as: "url",
-  }),
+  Object.keys(
+    import.meta.glob("../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}", {
+      eager: true,
+      as: "url",
+    }),
+  ),
 );
 
 const chapterCovers = toUrlMap(
@@ -175,10 +177,12 @@ export function chapterCoverUrl(chapterId: number): string {
 
 console.log(
   "AVATARS",
-  import.meta.glob("../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
-    eager: true,
-    as: "url",
-  }),
+  Object.keys(
+    import.meta.glob("../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
+      eager: true,
+      as: "url",
+    }),
+  ),
 );
 
 const avatars = toUrlMap(
