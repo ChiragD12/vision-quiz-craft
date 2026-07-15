@@ -14,10 +14,6 @@ import { WALLPAPERS } from "./wallpapers";
 
 const PLACEHOLDER = "/journey-placeholder.svg";
 
-console.log("AVATARS", avatars);
-console.log("CHAPTER COVERS", chapterCovers);
-console.log("CHAPTER 1", chapterGlobs[1]);
-
 function firstUrl(mod: Record<string, unknown>): string | null {
   const keys = Object.keys(mod).sort((a, b) =>
     a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }),
@@ -149,6 +145,14 @@ export function storyImageUrl(storyId: number): string {
 
 // ---------- chapter covers ----------
 
+console.log(
+  "CHAPTER COVERS",
+  import.meta.glob("../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}", {
+    eager: true,
+    as: "url",
+  }),
+);
+
 const chapterCovers = toUrlMap(
   import.meta.glob(
     "../../assets/Secret-Folder/chapter-covers/*.{webp,png,jpg,jpeg,jfif}",
@@ -168,6 +172,14 @@ export function chapterCoverUrl(chapterId: number): string {
 }
 
 // ---------- lion avatars ----------
+
+console.log(
+  "AVATARS",
+  import.meta.glob("../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
+    eager: true,
+    as: "url",
+  }),
+);
 
 const avatars = toUrlMap(
   import.meta.glob("../../assets/Secret-Folder/avatars/**/*.{webp,png,jpg,jpeg}", {
