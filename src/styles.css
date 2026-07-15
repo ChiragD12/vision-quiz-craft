@@ -81,6 +81,12 @@
   --ring: oklch(0.82 0.13 82);
   --color-scheme: dark;
 
+  /* Shared premium easing/duration for hover, tap and press feedback
+     (buttons, links, cards). Purely a timing token — no colors, no
+     layout — used by the interaction-polish rules further down. */
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-premium: 180ms;
+
   /* Elevation. Dark theme keeps its original single deep shadow;
      surfaces had no resting shadow before, so that stays "none". */
   --shadow-lift-value: 0 20px 48px -24px rgb(0 0 0 / 0.75);
@@ -371,4 +377,46 @@ img[aria-hidden="true"] {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-surface);
+}
+
+/*
+  Premium interaction polish (global).
+  Purely additive: smooths hover/tap/press feedback and shadow changes
+  wherever those states already exist elsewhere via Tailwind classes
+  (hover:, active:, etc.) or plain <button>/<a>/[role="button"]
+  elements — no colors, typography, or layout are touched, and no
+  component's markup, structure, or logic changes.
+*/
+@layer base {
+  button,
+  a,
+  [role="button"],
+  .surface {
+    transition:
+      transform var(--duration-premium) var(--ease-premium),
+      box-shadow var(--duration-premium) var(--ease-premium),
+      background-color var(--duration-premium) var(--ease-premium),
+      border-color var(--duration-premium) var(--ease-premium),
+      opacity var(--duration-premium) var(--ease-premium),
+      color var(--duration-premium) var(--ease-premium);
+  }
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: scale(0.975);
+  }
+}
+
+/* Respect prefers-reduced-motion: collapse CSS transitions/animations to
+   effectively instant for anyone who has asked for reduced motion, site-
+   wide. Framer Motion components in individual pages separately check
+   this preference for their own JS-driven animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { api, REVISION_SCHEDULE_DAYS, type MCQ, type Quiz, type TopicRevision } from "@/lib/store";
 import { QuizTimer } from "@/components/quiz-timer";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ function daysUntil(dateKey: string): number {
 function QuizPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
   const [quiz, setQuiz] = useState<Quiz | undefined>(() => api.getQuiz(id));
   const [idx, setIdx] = useState<number>(() => quiz?.current_index ?? 0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -301,7 +302,13 @@ function QuizPage() {
       : null;
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <Card className="p-8 max-w-md w-full text-center">
+        <motion.div
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 14, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-md w-full"
+        >
+        <Card className="p-8 w-full text-center">
           <h1 className="font-display text-3xl font-semibold mb-2">Revision Complete</h1>
           <div className="my-6">
             <div className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -321,6 +328,7 @@ function QuizPage() {
             Continue
           </Button>
         </Card>
+        </motion.div>
       </div>
     );
   }
@@ -328,7 +336,13 @@ function QuizPage() {
   if (isSurvival && survivalOver && survivalResult) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <Card className="p-8 max-w-md w-full text-center">
+        <motion.div
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 14, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-md w-full"
+        >
+        <Card className="p-8 w-full text-center">
           <h1 className="font-display text-3xl font-semibold mb-2">Game Over</h1>
           {survivalResult.isNewBest && (
             <p className="text-primary font-semibold mb-2">New Best!</p>
@@ -356,6 +370,7 @@ function QuizPage() {
             </Button>
           </div>
         </Card>
+        </motion.div>
       </div>
     );
   }
@@ -613,10 +628,14 @@ function QuizPage() {
         <AnimatePresence mode="wait">
           <motion.div
             key={`${quiz.id}:${idx}`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 10, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.99 }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 300, damping: 30, mass: 0.9 }
+            }
           >
             <Card className="p-6 sm:p-8">
               {q.difficulty && (
@@ -660,7 +679,9 @@ function QuizPage() {
                       disabled={isRevealed}
                       initial={false}
                       animate={
-                        showWrong
+                        prefersReducedMotion
+                          ? { scale: 1, x: 0 }
+                          : showWrong
                           ? { x: [0, -6, 6, -4, 4, -2, 0], scale: 1 }
                           : isPicked && !isRevealed
                           ? { scale: [1, 0.98, 1.02, 1] }
@@ -669,13 +690,15 @@ function QuizPage() {
                           : { scale: 1, x: 0 }
                       }
                       transition={
-                        showWrong
+                        prefersReducedMotion
+                          ? { duration: 0 }
+                          : showWrong
                           ? { duration: 0.42, ease: "easeInOut" }
-                          : { duration: 0.3, ease: [0.22, 1, 0.36, 1] }
+                          : { type: "spring", stiffness: 420, damping: 26 }
                       }
-                      whileTap={!isRevealed ? { scale: 0.985 } : undefined}
+                      whileTap={!isRevealed && !prefersReducedMotion ? { scale: 0.985 } : undefined}
                       className={cn(
-                        "flex w-full items-start gap-3 rounded-xl border border-border bg-background/30 px-5 py-3.5 text-left shadow-sm transition-colors",
+                        "flex w-full items-start gap-3 rounded-xl border border-border bg-background/30 px-5 py-3.5 text-left shadow-sm",
                         !isRevealed && "hover:border-primary/50 hover:bg-muted hover:shadow-md cursor-pointer",
                         showCorrect && "border-success/60 bg-success/10 shadow-[0_0_0_1px_hsl(var(--success)/0.4),0_0_18px_hsl(var(--success)/0.25)]",
                         showWrong && "border-destructive/60 bg-destructive/10",
@@ -711,13 +734,17 @@ function QuizPage() {
                   can never end from an accidental tap. */}
               {!isSurvival && (
                 <div className="mt-5 mb-5 flex justify-between">
-  <Button variant="ghost" onClick={prev} disabled={idx <= 0}>
-    <ArrowLeft className="mr-2 h-4 w-4" /> Prev
-  </Button>
-  <Button onClick={isTimed && idx + 1 === total ? submitExam : next}>
-    {isTimed && idx + 1 === total ? "Submit Exam" : idx + 1 === total ? "Finish quiz" : "Next"}
-    <ArrowRight className="ml-2 h-4 w-4" />
-  </Button>
+  <motion.div whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }} className="inline-block">
+    <Button variant="ghost" onClick={prev} disabled={idx <= 0}>
+      <ArrowLeft className="mr-2 h-4 w-4" /> Prev
+    </Button>
+  </motion.div>
+  <motion.div whileTap={prefersReducedMotion ? undefined : { scale: 0.96 }} className="inline-block">
+    <Button onClick={isTimed && idx + 1 === total ? submitExam : next}>
+      {isTimed && idx + 1 === total ? "Submit Exam" : idx + 1 === total ? "Finish quiz" : "Next"}
+      <ArrowRight className="ml-2 h-4 w-4" />
+    </Button>
+  </motion.div>
 </div>
               )}
 

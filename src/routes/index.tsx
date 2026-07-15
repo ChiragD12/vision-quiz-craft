@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { AppBackground } from "@/components/app-background";
 import { JourneyHero } from "@/components/journey-hero";
 import { api, type Quiz } from "@/lib/store";
@@ -66,6 +66,7 @@ function useDB() {
 function HomePage() {
   useDB();
   const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
 
   const hasKey = !!api.getApiKey();
   const subjects = api.visibleSubjects();
@@ -92,6 +93,16 @@ const progress = chapter
   const [journeyExpanded, setJourneyExpanded] = useState(false);
   const [practiceMode, setPracticeMode] = useState<"bookmarks" | "wrong" | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Shared entrance animation for the page's top-level sections — a
+  // gentle fade + rise, staggered by an explicit delay per section so
+  // content settles in smoothly on load instead of popping in at once.
+  // No-ops (instant) when the user prefers reduced motion.
+  const sectionEnter = (delay: number) => ({
+    initial: prefersReducedMotion ? false : { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: prefersReducedMotion ? 0 : 0.45, delay, ease: [0.22, 1, 0.36, 1] as const },
+  });
 
   const startPractice = async () => {
     if (!practiceMode) return;
@@ -169,7 +180,7 @@ const progress = chapter
 </header>
 
       <main className="mx-auto max-w-4xl px-5 pt-2 pb-10 space-y-8">
-        <section>
+        <motion.section {...sectionEnter(0)}>
           <JourneyHero
             expanded={journeyExpanded}
             onToggle={() =>
@@ -186,7 +197,7 @@ const progress = chapter
             progress={progress}
             rewardProgress={rewardProgress}
           />
-        </section>
+        </motion.section>
 
         {!hasKey && (
           <Card className="p-6 border-primary/30 bg-primary/5 shadow-sm">
@@ -206,37 +217,52 @@ const progress = chapter
           </Card>
         )}
 
-        {dueRevisions > 0 && (
-          <div className="flex justify-end">
-            <Link
-              to="/spaced-revision"
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm transition-all hover:bg-primary/15 hover:border-primary/40"
+        <AnimatePresence initial={false}>
+          {dueRevisions > 0 && (
+            <motion.div
+              key="due-badge"
+              layout
+              initial={{ opacity: 0, y: -6, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, y: -6, height: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="flex justify-end overflow-hidden"
             >
-              <CalendarClock className="h-3.5 w-3.5" />
-              {dueRevisions} {dueRevisions === 1 ? "Revision" : "Revisions"} Due
-            </Link>
-          </div>
-        )}
+              <Link
+                to="/spaced-revision"
+                className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm hover:bg-primary/15 hover:border-primary/40"
+              >
+                <CalendarClock className="h-3.5 w-3.5" />
+                {dueRevisions} {dueRevisions === 1 ? "Revision" : "Revisions"} Due
+              </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <section>
+        <motion.section {...sectionEnter(0.08)}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {dueRevisions > 0 && (
-              <Card className="p-5 h-full shadow-sm border-primary/30 bg-primary/5">
-                <div className="flex items-center gap-2.5 mb-2 text-primary">
-                  <CalendarClock className="h-5 w-5" />
-                  <h3 className="font-semibold text-foreground">Spaced Revision</h3>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {dueRevisions} {dueRevisions === 1 ? "Topic" : "Topics"} Due
-                </p>
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() => navigate({ to: "/spaced-revision" })}
-                >
-                  Review Now
-                </Button>
-              </Card>
+              <motion.div
+                whileHover={prefersReducedMotion ? undefined : { y: -3 }}
+                transition={{ type: "spring", stiffness: 420, damping: 28 }}
+              >
+                <Card className="p-5 h-full shadow-sm border-primary/30 bg-primary/5">
+                  <div className="flex items-center gap-2.5 mb-2 text-primary">
+                    <CalendarClock className="h-5 w-5" />
+                    <h3 className="font-semibold text-foreground">Spaced Revision</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {dueRevisions} {dueRevisions === 1 ? "Topic" : "Topics"} Due
+                  </p>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => navigate({ to: "/spaced-revision" })}
+                  >
+                    Review Now
+                  </Button>
+                </Card>
+              </motion.div>
             )}
             <ActionCard
               onClick={() => {
@@ -289,9 +315,9 @@ const progress = chapter
               onRetry={startPractice}
             />
           </div>
-        </section>
+        </motion.section>
 
-        <section>
+        <motion.section {...sectionEnter(0.16)}>
           <div className="flex items-baseline justify-between mb-4">
             <h2 className="font-display text-xl font-semibold">Subjects</h2>
             <Link
@@ -315,21 +341,27 @@ const progress = chapter
                 const topics = api.topicsForSubject(s.id);
                 return (
                   <Link key={s.id} to="/subject/$id" params={{ id: s.id }}>
-                    <Card className="p-5 h-full shadow-sm hover:border-primary/40 hover:shadow-md transition-all">
-                      <div className="font-medium truncate">{s.name}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        {topics.length} topic{topics.length === 1 ? "" : "s"}
-                      </div>
-                    </Card>
+                    <motion.div
+                      whileHover={prefersReducedMotion ? undefined : { y: -3 }}
+                      whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
+                      transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                    >
+                      <Card className="p-5 h-full shadow-sm hover:border-primary/40 hover:shadow-md">
+                        <div className="font-medium truncate">{s.name}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {topics.length} topic{topics.length === 1 ? "" : "s"}
+                        </div>
+                      </Card>
+                    </motion.div>
                   </Link>
                 );
               })}
             </div>
           )}
-        </section>
+        </motion.section>
 
         {recent.length > 0 && (
-          <section>
+          <motion.section {...sectionEnter(0.22)}>
             <h2 className="font-display text-xl font-semibold mb-4">Recent</h2>
             <div className="space-y-3">
               {recent.map((q) => {
@@ -345,27 +377,31 @@ const progress = chapter
                 const score = correct * 2 - wrong * 0.66;
                 return (
                   <Link key={q.id} to="/result/$id" params={{ id: q.id }} className="block">
-                    <Card className="p-5 shadow-sm hover:border-primary/40 hover:shadow-md transition-all">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">{q.title}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {q.question_count} Qs · {correct}✓ {wrong}✗
+                    <motion.div
+                      whileHover={prefersReducedMotion ? undefined : { y: -2 }}
+                      whileTap={prefersReducedMotion ? undefined : { scale: 0.985 }}
+                      transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                    >
+                      <Card className="p-5 shadow-sm hover:border-primary/40 hover:shadow-md">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-medium truncate">{q.title}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {q.question_count} Qs · {correct}✓ {wrong}✗
+                            </div>
+                          </div>
+                          <div className="font-display text-lg nums text-primary">
+                            {score.toFixed(1)}
                           </div>
                         </div>
-                        <div className="font-display text-lg nums text-primary">
-                          {score.toFixed(1)}
-                        </div>
-                      </div>
-                    </Card>
+                      </Card>
+                    </motion.div>
                   </Link>
                 );
               })}
             </div>
-          </section>
+          </motion.section>
         )}
-
-        
       </main>
 
       <footer className="mx-auto max-w-4xl px-5 py-10 text-center text-xs text-muted-foreground">
@@ -390,16 +426,23 @@ function ActionCard({
   body: string;
   accent?: boolean;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const inner = (
-    <Card
-      className={`p-5 h-full shadow-sm transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5 ${accent ? "border-primary/30" : ""}`}
+    <motion.div
+      whileHover={prefersReducedMotion ? undefined : { y: -3 }}
+      whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
+      transition={{ type: "spring", stiffness: 420, damping: 28 }}
     >
-      <div className="flex items-center gap-2.5 mb-2 text-primary">
-        {icon}
-        <h3 className="font-semibold text-foreground">{title}</h3>
-      </div>
-      <p className="text-sm text-muted-foreground">{body}</p>
-    </Card>
+      <Card
+        className={`p-5 h-full shadow-sm hover:border-primary/40 hover:shadow-md ${accent ? "border-primary/30" : ""}`}
+      >
+        <div className="flex items-center gap-2.5 mb-2 text-primary">
+          {icon}
+          <h3 className="font-semibold text-foreground">{title}</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">{body}</p>
+      </Card>
+    </motion.div>
   );
   if (to)
     return (
@@ -437,59 +480,66 @@ function PracticeCard({
   onCancel: () => void;
   onRetry: () => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   return (
-    <Card
-      className={`p-5 h-full shadow-sm transition-all overflow-hidden ${active ? "border-primary/40" : "hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5"}`}
+    <motion.div
+      whileHover={!active && !prefersReducedMotion ? { y: -3 } : undefined}
+      transition={{ type: "spring", stiffness: 420, damping: 28 }}
     >
-      <motion.div layout="position" transition={{ duration: 0.2 }}>
-        <AnimatePresence mode="wait" initial={false}>
-          {!active ? (
-            <motion.button
-              key="default"
-              type="button"
-              className="text-left w-full block"
-              onClick={onActivate}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="flex items-center gap-2.5 mb-2 text-primary">
-                {icon}
-                <h3 className="font-semibold text-foreground">{title}</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">{body}</p>
-            </motion.button>
-          ) : (
-            <motion.div
-              key="confirm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <h3 className="font-semibold text-foreground">
-                Retry {mode === "bookmarks" ? "bookmarked" : "wrong"} questions
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1 mb-4">
-                {mode === "bookmarks"
-                  ? `${count} bookmarked questions available`
-                  : `${count} wrong questions available`}
-              </p>
-              <div className="flex gap-2">
-                <Button onClick={onRetry} disabled={busy || count === 0}>
-                  {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Retry
-                </Button>
-                <Button variant="ghost" onClick={onCancel}>
-                  Cancel
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </Card>
+      <Card
+        className={`p-5 h-full shadow-sm overflow-hidden ${active ? "border-primary/40" : "hover:border-primary/40 hover:shadow-md"}`}
+      >
+        <motion.div layout="position" transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}>
+          <AnimatePresence mode="wait" initial={false}>
+            {!active ? (
+              <motion.button
+                key="default"
+                type="button"
+                className="text-left w-full block"
+                onClick={onActivate}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
+              >
+                <div className="flex items-center gap-2.5 mb-2 text-primary">
+                  {icon}
+                  <h3 className="font-semibold text-foreground">{title}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">{body}</p>
+              </motion.button>
+            ) : (
+              <motion.div
+                key="confirm"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
+              >
+                <h3 className="font-semibold text-foreground">
+                  Retry {mode === "bookmarks" ? "bookmarked" : "wrong"} questions
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">
+                  {mode === "bookmarks"
+                    ? `${count} bookmarked questions available`
+                    : `${count} wrong questions available`}
+                </p>
+                <div className="flex gap-2">
+                  <Button onClick={onRetry} disabled={busy || count === 0}>
+                    {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Retry
+                  </Button>
+                  <Button variant="ghost" onClick={onCancel}>
+                    Cancel
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </Card>
+    </motion.div>
   );
 }

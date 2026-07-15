@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { api, type MCQ } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -110,6 +110,7 @@ function AnimatedNumber({
 function ResultPage() {
   const { id } = Route.useParams();
   const quiz = api.getQuiz(id);
+  const prefersReducedMotion = useReducedMotion();
   const [showCelebration, setShowCelebration] = useState(false);
   useEffect(() => {
     if (!quiz) return;
@@ -180,9 +181,13 @@ function ResultPage() {
 
       <main className="mx-auto max-w-3xl px-5 py-8 space-y-6">
         <motion.div
-          initial={{ opacity: 0, y: 14, scale: 0.98 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 18, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 260, damping: 24, mass: 0.9 }
+          }
         >
           <Card className="overflow-hidden p-8">
             <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
@@ -194,6 +199,7 @@ function ResultPage() {
                   <AnimatedNumber
                     value={score}
                     decimals={2}
+                    durationMs={prefersReducedMotion ? 0 : 1100}
                     className="font-display text-5xl font-semibold text-primary drop-shadow-[0_0_18px_hsl(var(--primary)/0.35)] sm:text-6xl"
                   />
                   <span className="text-lg text-muted-foreground">/ {maxScore}</span>
@@ -254,9 +260,9 @@ function ResultPage() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.35, delay: prefersReducedMotion ? 0 : 0.15, ease: "easeOut" }}
           className={cn(
             "flex items-center gap-3 rounded-2xl border px-5 py-4 backdrop-blur-md",
             tier.ring,
@@ -321,9 +327,9 @@ function ResultPage() {
           />
           {hasDifficultyData && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.32, delay: 0.25, ease: "easeOut" }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.32, delay: prefersReducedMotion ? 0 : 0.25, ease: "easeOut" }}
               className="col-span-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-md sm:col-span-1"
             >
               <div className="mb-2 flex items-center gap-2 text-muted-foreground">
@@ -369,11 +375,16 @@ function StatCard({
   ring: string;
   delay?: number;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.32, delay, ease: "easeOut" }}
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { type: "spring", stiffness: 300, damping: 26, delay }
+      }
       className={cn("rounded-2xl border p-4 backdrop-blur-md", ring)}
     >
       <Icon className={cn("h-4 w-4", accent)} />
@@ -398,6 +409,7 @@ function DifficultyBar({
   total: number;
   color: string;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
     <div>
@@ -409,7 +421,7 @@ function DifficultyBar({
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.6, ease: "easeOut", delay: prefersReducedMotion ? 0 : 0.2 }}
           className={cn("h-full rounded-full", color)}
         />
       </div>
@@ -488,6 +500,7 @@ function ReviewPanel({
   questions: MCQ[];
   answers: (number | null)[];
 }) {
+  const prefersReducedMotion = useReducedMotion();
   const total = questions.length;
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -521,7 +534,7 @@ function ReviewPanel({
         <motion.div
           className="h-full rounded-full bg-primary"
           animate={{ width: `${((index + 1) / total) * 100}%` }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.3, ease: "easeOut" }}
         />
       </div>
 
@@ -536,20 +549,22 @@ function ReviewPanel({
             const s = statusStyles[st];
             const active = i === index;
             return (
-              <button
+              <motion.button
                 key={i}
                 type="button"
                 onClick={() => go(i)}
                 aria-label={`Jump to question ${i + 1} (${s.label})`}
                 aria-current={active}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.92 }}
+                transition={{ type: "spring", stiffness: 420, damping: 26 }}
                 className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold nums transition-transform",
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold nums",
                   s.badge,
                   active && "scale-110 ring-2 ring-primary ring-offset-2 ring-offset-background",
                 )}
               >
                 {i + 1}
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -564,7 +579,11 @@ function ReviewPanel({
             initial="enter"
             animate="center"
             exit="exit"
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 320, damping: 30, mass: 0.9 }
+            }
           >
             <Card className="p-5">
               <div className="mb-4 flex items-start gap-3">
@@ -633,20 +652,32 @@ function ReviewPanel({
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <Button
-          variant="secondary"
-          size="lg"
-          className="h-12 flex-1"
-          onClick={() => go(index - 1)}
-          disabled={index === 0}
+        <motion.div
+          className="flex-1"
+          whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 420, damping: 26 }}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Previous
-        </Button>
-        <Button size="lg" className="h-12 flex-1" onClick={() => go(index + 1)} disabled={index === total - 1}>
-          Next
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+          <Button
+            variant="secondary"
+            size="lg"
+            className="h-12 w-full"
+            onClick={() => go(index - 1)}
+            disabled={index === 0}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Previous
+          </Button>
+        </motion.div>
+        <motion.div
+          className="flex-1"
+          whileTap={prefersReducedMotion ? undefined : { scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 420, damping: 26 }}
+        >
+          <Button size="lg" className="h-12 w-full" onClick={() => go(index + 1)} disabled={index === total - 1}>
+            Next
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
