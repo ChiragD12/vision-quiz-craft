@@ -56,7 +56,17 @@ export function AppBackground({
     <div
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: -1 }}
+      style={{
+        zIndex: -1,
+        // Promote this layer to its own compositing layer so it's
+        // isolated from repaints triggered elsewhere (e.g. the edge-nav
+        // backdrop's animated backdrop-filter). Without this, negative
+        // z-index content can get swept into the same repaint pass as
+        // sibling stacking contexts, causing a visible flash.
+        isolation: "isolate",
+        transform: "translateZ(0)",
+        willChange: "opacity",
+      }}
     >
       <AnimatePresence mode="sync" initial={false}>
         <motion.img

@@ -215,6 +215,12 @@ function EdgeNavOverlay() {
               background:
                 "linear-gradient(90deg, rgba(8,10,20,0.55), rgba(8,10,20,0.28) 60%, rgba(8,10,20,0.12))",
               WebkitBackdropFilter: "blur(16px)",
+              // Own compositing layer for the animated backdrop-filter so
+              // the browser doesn't repaint sibling/underlying stacking
+              // contexts (the fixed, negative-z AppBackground) on every
+              // frame of the open/close animation.
+              transform: "translateZ(0)",
+              willChange: "backdrop-filter, opacity",
             }}
           />
 
