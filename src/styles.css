@@ -166,123 +166,117 @@
 :root[data-theme="light"] {
   --color-scheme: light;
 
-  /* Warm linen page background — never pure white, so cards can sit
-     visibly above it. Faint warm cast (not gray, not blue) reads as
-     "considered" rather than a straight dark-theme inversion. */
-  --background: oklch(83.444% 0.02102 224.54 / 0.925);
-  --foreground: oklch(0.235 0.028 262);
+  /* Warm ivory / parchment page. Opaque, faintly warm — sets the whole
+     UI on cream rather than blue-tinted glass, and never reads as
+     "inverted dark". */
+  --background: oklch(0.972 0.012 86);
+  --foreground: oklch(0.235 0.022 72);
 
-  /* Card sits a clear step above the page, with its own warm-white
-     tone rather than being identical to it — this is what creates the
-     "layered" feel instead of flat panels. */
-  --card: oklch(97.756% 0.02504 86.856);
-  --card-foreground: oklch(0.235 0.028 262);
+  /* Card sits a clean step above the page with a subtle warm cast —
+     not pure white, not brown; think aged paper under museum light. */
+  --card: oklch(0.992 0.006 88);
+  --card-foreground: oklch(0.22 0.022 72);
 
-  /* Popovers/dialogs float a step above cards: cleanest white, paired
-     with --shadow-lift below for real separation from the page. */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.028 262);
+  --popover: oklch(0.997 0.004 88);
+  --popover-foreground: oklch(0.22 0.022 72);
 
-  /* Richer, more saturated gold than a naive darkened version of the
-     dark-theme accent — reads as premium leaf/brass rather than mustard,
-     while still holding AA contrast against white and against
-     primary-foreground. */
-  --primary: oklch(0.565 0.15 74);
-  --primary-foreground: oklch(0.99 0.008 90);
+  /* Refined saffron / warm amber. Deep enough to hold AA on ivory
+     surfaces and against the white foreground used on primary chips. */
+  --primary: oklch(0.685 0.155 62);
+  --primary-foreground: oklch(0.995 0.006 88);
 
-  --accent: oklch(0.565 0.15 74);
-  --accent-foreground: oklch(0.99 0.008 90);
+  --accent: oklch(0.685 0.155 62);
+  --accent-foreground: oklch(0.995 0.006 88);
 
-  /* Warm ivory secondary/muted surfaces (not cool gray) so chips, tabs
-     and subtle fills feel like part of the same warm palette. */
-  --secondary: oklch(0.955 0.011 80);
-  --secondary-foreground: oklch(0.28 0.03 262);
+  /* Calm light blue as a secondary surface tone — airy, not corporate.
+     Reads as sky-lit paper rather than a UI panel. */
+  --secondary: oklch(0.955 0.022 232);
+  --secondary-foreground: oklch(0.28 0.03 245);
 
-  --muted: oklch(0.947 0.012 80);
-  --muted-foreground: oklch(0.475 0.026 265);
+  /* Warm neutral (not cold gray) muted surface, warm-gray text on it. */
+  --muted: oklch(0.955 0.01 82);
+  --muted-foreground: oklch(0.5 0.018 72);
 
-  --destructive: oklch(0.55 0.19 25);
-  --destructive-foreground: oklch(0.99 0.005 90);
+  --destructive: oklch(0.56 0.185 28);
+  --destructive-foreground: oklch(0.995 0.005 88);
 
-  --success: oklch(0.465 0.13 155);
-  --success-foreground: oklch(0.99 0.005 90);
+  /* Muted sage / soft emerald — the "positive" hue in the palette. */
+  --success: oklch(0.6 0.095 158);
+  --success-foreground: oklch(0.995 0.005 88);
 
-  /* Warm-tinted, low-opacity borders instead of flat black-alpha — they
-     disappear into the linen background at rest and only read as
-     structure where a card actually needs an edge. */
-  --border: oklch(0.32 0.035 265 / 0.12);
-  --input: oklch(0.32 0.035 265 / 0.11);
-  --ring: oklch(0.565 0.15 74 / 0.6);
+  /* Warm-neutral borders. Nearly invisible on ivory at rest — only
+     surface where structure genuinely needs an edge. */
+  --border: oklch(0.35 0.02 72 / 0.11);
+  --input: oklch(0.35 0.02 72 / 0.12);
+  --ring: oklch(0.685 0.155 62 / 0.55);
 
-  /* Soft, warm-tinted elevation instead of harsh black drop shadows —
-     this alone is most of what separates "premium" from "flat" on a
-     light surface. */
+  /* Soft, warm-tinted elevation. Two layers — a tight contact shadow
+     plus a diffuse long shadow — do the heavy lifting for depth. */
   --shadow-lift-value:
-    0 2px 6px -2px oklch(0.32 0.05 70 / 0.1),
-    0 28px 60px -30px oklch(0.32 0.06 72 / 0.32);
+    0 1px 2px -1px oklch(0.28 0.04 72 / 0.08),
+    0 2px 6px -2px oklch(0.28 0.04 72 / 0.06),
+    0 26px 56px -30px oklch(0.28 0.05 72 / 0.22);
   --shadow-surface-value:
-    0 1px 2px oklch(0.32 0.05 70 / 0.05),
-    0 10px 26px -18px oklch(0.32 0.06 72 / 0.2);
+    0 1px 2px oklch(0.28 0.04 72 / 0.05),
+    0 10px 26px -18px oklch(0.28 0.05 72 / 0.16);
 
   /* -------- Glass-surface tokens (light) --------
-     White-glass on the warm linen page instead of white-on-dark
-     overlays, plus warm-neutral (not black) borders/insets — this is
-     what lets GlassCard, pills, radio-cards, etc. read as "premium
-     light glass" rather than an inverted dark panel. */
-  --glass-tint-strong: oklch(1 0 0 / 0.6);
-  --glass-tint-weak: oklch(1 0 0 / 0.28);
-  --glass-border: oklch(0.32 0.035 265 / 0.12);
-  --glass-inset-line: oklch(1 0 0 / 0.65);
-  --glass-shadow-color: oklch(0.32 0.06 72 / 0.28);
+     Cream-glass on parchment — warm, low-saturation, generous highlight
+     line on top. Never a white overlay on dark. */
+  --glass-tint-strong: oklch(1 0 0 / 0.72);
+  --glass-tint-weak: oklch(0.985 0.008 86 / 0.42);
+  --glass-border: oklch(0.35 0.02 72 / 0.12);
+  --glass-inset-line: oklch(1 0 0 / 0.7);
+  --glass-shadow-color: oklch(0.28 0.05 72 / 0.2);
   --glass-hover-shadow:
     0 0 0 1px color-mix(in srgb, var(--primary) 22%, transparent),
-    0 20px 60px -20px color-mix(in srgb, var(--primary) 16%, transparent);
+    0 22px 60px -22px color-mix(in srgb, var(--primary) 18%, transparent);
 
-  --option-bg-inactive: oklch(0.32 0.035 265 / 0.035);
-  --option-dot-border-inactive: oklch(0.32 0.035 265 / 0.35);
+  --option-bg-inactive: oklch(0.35 0.02 72 / 0.03);
+  --option-dot-border-inactive: oklch(0.35 0.02 72 / 0.32);
 
-  --pill-bg: oklch(1 0 0 / 0.5);
+  --pill-bg: oklch(1 0 0 / 0.55);
 
   --status-online: var(--success);
   --status-online-glow: color-mix(in srgb, var(--success) 55%, transparent);
   --status-offline: var(--muted-foreground);
 
-  --input-glass-bg: oklch(1 0 0 / 0.6);
-  --input-glass-border: oklch(0.32 0.035 265 / 0.14);
+  --input-glass-bg: oklch(1 0 0 / 0.66);
+  --input-glass-border: oklch(0.35 0.02 72 / 0.14);
 
-  --secondary-glass-bg: oklch(1 0 0 / 0.5);
-  --secondary-glass-border: oklch(0.32 0.035 265 / 0.14);
-  --secondary-glass-bg-hover: oklch(1 0 0 / 0.75);
+  --secondary-glass-bg: oklch(1 0 0 / 0.55);
+  --secondary-glass-border: oklch(0.35 0.02 72 / 0.14);
+  --secondary-glass-bg-hover: oklch(1 0 0 / 0.8);
 
-  --ambient-secondary-glow: rgba(120, 90, 200, 0.05);
+  --primary-glow-strong: color-mix(in srgb, var(--primary) 45%, transparent);
+  --destructive-glow: color-mix(in srgb, var(--destructive) 55%, transparent);
 
-  /* -------- Card / Input / Textarea surface polish (Light only) --------
-     Dedicated tokens (not --card / --input) so this first pass can't
-     accidentally change any other component still reading those base
-     tokens. Card keeps a touch of translucency so the wallpaper stays
-     visible behind it rather than being fully occluded; inputs/textareas
-     get a warm "paper" surface instead of transparent-on-wallpaper. */
+  --ambient-primary-glow: color-mix(in srgb, var(--primary) 8%, transparent);
+  --ambient-secondary-glow: oklch(0.72 0.09 232 / 0.09);
+
+  /* -------- Card / Input / Textarea surface polish (Light) -------- */
   --card-surface-bg: linear-gradient(
-    165deg,
-    oklch(98.3% 0.022 85 / 0.96),
-    oklch(96.2% 0.03 82 / 0.9)
+    168deg,
+    oklch(0.995 0.006 88 / 0.96),
+    oklch(0.975 0.014 84 / 0.9)
   );
-  --card-surface-border: oklch(0.38 0.045 68 / 0.18);
-  --card-surface-highlight: oklch(1 0 0 / 0.55);
+  --card-surface-border: oklch(0.38 0.028 72 / 0.14);
+  --card-surface-highlight: oklch(1 0 0 / 0.7);
   --card-surface-shadow:
     0 1px 0 0 var(--card-surface-highlight) inset,
-    0 1px 3px oklch(0.32 0.05 70 / 0.08),
-    0 26px 54px -26px oklch(0.32 0.06 72 / 0.34);
+    0 1px 2px oklch(0.28 0.04 72 / 0.05),
+    0 2px 6px -2px oklch(0.28 0.04 72 / 0.05),
+    0 26px 54px -28px oklch(0.28 0.05 72 / 0.24);
   --card-surface-radius: calc(var(--radius) + 6px);
 
-  --input-surface-bg: oklch(98% 0.02 85 / 0.92);
-  --input-surface-border: oklch(0.38 0.045 68 / 0.26);
-  --input-surface-shadow: inset 0 1px 2px oklch(0.32 0.05 70 / 0.05);
-  --input-surface-placeholder: oklch(0.42 0.03 265 / 0.8);
+  --input-surface-bg: oklch(0.995 0.006 88 / 0.94);
+  --input-surface-border: oklch(0.38 0.028 72 / 0.2);
+  --input-surface-shadow: inset 0 1px 2px oklch(0.28 0.04 72 / 0.05);
+  --input-surface-placeholder: oklch(0.5 0.02 72 / 0.75);
   --input-surface-focus-border: var(--primary);
   --input-surface-focus-shadow:
-    inset 0 1px 2px oklch(0.32 0.05 70 / 0.05),
-    0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+    inset 0 1px 2px oklch(0.28 0.04 72 / 0.05),
+    0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 /*
