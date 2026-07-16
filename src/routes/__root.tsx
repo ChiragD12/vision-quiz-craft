@@ -28,6 +28,7 @@ import { currentLion } from "@/lib/journey";
 import { lionAvatarUrl } from "@/lib/journey/assets";
 import { RewardCeremonyProvider } from "@/components/reward-ceremony/RewardCeremonyProvider";
 import { EdgeNavProvider, EdgeNavHamburger } from "@/components/edge-nav";
+import { useFullscreenLoading } from "@/lib/fullscreen-loading";
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -190,14 +191,7 @@ function RootComponent() {
     initAppearance();
   }, []);
 
-  useEffect(() => {
-    console.log({
-      innerWidth: window.innerWidth,
-      outerWidth: window.outerWidth,
-      clientWidth: document.documentElement.clientWidth,
-      visualViewport: window.visualViewport?.width,
-    });
-  }, []);
+  const fullscreenLoading = useFullscreenLoading();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -205,8 +199,8 @@ function RootComponent() {
     <EdgeNavProvider>
       <Toaster position="top-center" richColors theme="dark" />
       <SplashScreen />
-      <HomeLogo />
-      <EdgeNavHamburger />
+      {!fullscreenLoading && <HomeLogo />}
+      {!fullscreenLoading && <EdgeNavHamburger />}
       <AnimatedOutlet />
       <WallpaperSelector />
     </EdgeNavProvider>

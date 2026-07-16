@@ -19,6 +19,7 @@ import { ArrowLeft, Camera, FileText, ImagePlus, Loader2, Sparkles, Trash2, X } 
 import { toast } from "sonner";
 import { LoadingScreen } from "@/components/loading-screen";
 import { feedback, FEEDBACK } from "@/lib/feedback";
+import { setFullscreenLoading } from "@/lib/fullscreen-loading";
 
 type NewQuizSearch = {
   subjectId?: string;
@@ -116,6 +117,14 @@ function NewQuizPage() {
   const [textNote, setTextNote] = useState("");
   const [count, setCount] = useState<Count>(25);
   const [busy, setBusy] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFullscreenLoading(busy !== null);
+  }, [busy]);
+
+  useEffect(() => {
+    return () => setFullscreenLoading(false);
+  }, []);
 
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
