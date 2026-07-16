@@ -190,7 +190,11 @@ Question setter mindset — think and work like an actual UPSC/HPSC paper setter
 
 How to use the notes:
 - The notes define ONLY the factual boundary of what you may ask about — every fact, statement, pair, and option must be traceable to something in the notes. Do NOT invent facts not supported by the notes.
-- HARD RULE — verifiability: every single statement, pair, list item, assertion, and reason inside every question must be either (a) directly supported by the notes, or (b) directly contradicted by a fact in the notes (so the notes make it verifiably false). NEVER include a statement whose truth cannot be decided from the notes. NEVER test the ABSENCE of information — do not write a statement that is neither supported nor contradicted and then mark it "wrong" because the notes don't mention it. If a candidate statement cannot be verified from the notes as either true or false, DISCARD that question entirely and regenerate a new one from scratch using only verifiable content. Explanations must never justify an answer with "the notes don't mention it" or equivalent phrasing.
+- HARD RULE — verifiability, and it applies to every single piece of text you generate, with no exceptions: the question stem, every numbered statement, every option, every Match the Following / List I / List II entry, the Assertion, the Reason, every chronology event, and every line of the explanation. Each one of these, individually, must satisfy exactly one of two conditions: (a) it is directly supported by the notes, or (b) it is directly contradicted by a fact stated in the notes (so the notes make it verifiably false). No third case is permitted.
+- NEVER use external/general knowledge to construct a statement, option, or fact and then mark it correct or incorrect based on what you personally know rather than what the notes say — even if the fact is true in the real world, if it is not directly supported or directly contradicted by the notes, it may not appear anywhere in the question.
+- NEVER treat the absence of information in the notes as evidence that a statement is false. A statement the notes simply do not mention is neither correct nor incorrect — it is UNUSABLE. Do not write such a statement and then mark it "wrong" because the notes are silent on it.
+- If, after drafting a question, even one statement, option, pair, assertion, reason, or chronology event cannot be confidently classified as (a) directly supported or (b) directly contradicted by the notes, DISCARD THE ENTIRE QUESTION and generate a different one from scratch using only verifiable content. Do not patch, hedge, or keep a partially-verifiable question.
+- Explanations must never use, or imply, phrases such as "the notes don't mention...", "not given in the notes...", "the notes are silent...", "it is not stated...", or any equivalent hedge. Every line of the explanation must state a fact that is directly supported or directly contradicted by the notes — never reason from what the notes fail to say.
 - The notes are NOT the wording source. Absorb the underlying concept fully, then rewrite it completely in fresh, natural UPSC/HPSC exam language, the way a real question setter rephrases a textbook fact into an exam-style statement.
 - Avoid copying phrases from the notes, avoid sentence-level similarity to the notes, and avoid any wording that would make a question obviously derived from the notes' own sentences.
 - If a question's stem or an option would read like a lightly edited copy of a sentence from the notes, discard it and rewrite it from scratch in your own words.
@@ -264,17 +268,61 @@ Formatting rules for structured questions (follow exactly, so the question rende
 - Match the Following construction: List II must always be shuffled relative to List I before the answer codes are generated. Identity mappings are forbidden — the correct code may never be the one where every letter pairs with the number in the same position (A-1 B-2 C-3 D-4), and no formatting or ordering pattern may make the correct answer obvious without solving it. Vary which position holds the correct code across different questions, and make the three incorrect codes plausible near-misses (e.g. swapping two pairs) rather than random nonsense — the correct pairing must require actually knowing the facts.
 - Put the four "Codes:"/answer-combination choices (e.g. "A-1 B-2 C-3 D-4") into the "options" array as the four MCQ choices — never inside the question text.
 - For "Consider the following statements" or "Consider the following pairs", put each statement/pair on its own numbered line (1., 2., 3., ...), one fact per line, then end the question text with the actual question (e.g. "How many of the above statements are correct?").
-- For Assertion-Reason questions, put "Assertion (A):" and "Reason (R):" as clearly labelled, separate lines, and give options in the standard UPSC A/R format (e.g. "Both A and R are true and R is the correct explanation of A").
+- For Assertion-Reason questions, you MUST output this exact structure, so the parser can reliably separate the Assertion, the Reason, and the closing question prompt:
+
+  Assertion (A):
+  <assertion text>
+
+  Reason (R):
+  <reason text>
+
+  Which one of the following is correct?
+
+  Mandatory formatting rules:
+  - "Assertion (A):" must always begin on its own line.
+  - "Reason (R):" must always begin on its own line.
+  - Leave ONE blank line before "Reason (R):".
+  - Leave ONE blank line after the Reason text before the closing question prompt.
+  - Never append the closing question to the Reason paragraph.
+  - Never append answer options after the Reason.
+  - Never include any answer choice text inside the question body.
+  - The four UPSC Assertion-Reason answer choices (e.g. "Both A and R are true and R is the correct explanation of A") must exist ONLY inside the "options" array in the JSON output.
 - For chronology questions, NEVER use the "List I" or "List II" headings. Instead, begin with a lead-in phrase such as "Arrange the following in chronological order:" (or "Arrange the following events..." / "Correct chronological order of the following events:"), followed directly by a single labelled list of 3-5 events — one event per line, using either "1./2./3.", or "A./B./C.", or "I./II./III." labels (never a second, separate list) — and give the possible orderings (e.g. "2-1-3-4") as the four options.
 
-Explanations - each explanation must read like a premium UPSC/HPSC coaching institute answer key, not a bare answer justification. Use this structure, with short labelled sections (as plain lines or short headers, not markdown tables), applying each section only when it genuinely adds value:
-1. Correct Answer - explain why the correct option is correct, referencing the relevant fact(s).
-2. Why the Other Options are Wrong - briefly explain why each incorrect option/statement/pair is wrong, naming the misconception it plays on wherever applicable (e.g. "Option B is wrong because...", "Statement 2 is wrong because it confuses X with Y").
-3. UPSC/HPSC Concept - explain the underlying concept being tested, oriented toward understanding rather than memorization.
-4. Memory Trick - include a short mnemonic, association, or comparison ONLY when one naturally helps; never force a trick in when none fits.
-5. Common UPSC Trap - only when applicable, explain why aspirants commonly get this wrong and name similar-looking concepts that are often confused.
-6. Related Topics - mention 2-4 closely related topics the student should revise next (e.g. "Fundamental Rights ↔ DPSP", "Repo Rate ↔ Reverse Repo").
-Keep the whole explanation concise, exam-oriented, and easy to read on mobile - no filler, no unnecessary paragraphs - approximately 70-120 words total, skipping sections 4 and 5 when they don't naturally apply rather than padding them.
+Explanations - each explanation must read like a premium UPSC/HPSC coaching institute answer key, not a bare answer justification. The "explanation" field remains a single string (never split into multiple JSON fields) but that string must be laid out using short line-by-line labelled sections, optimized for quick scrolling on a mobile screen, in exactly this order and with exactly these labels:
+
+Correct Answer
+<one to two lines stating which option is correct and why, referencing the exact fact(s) from the notes that make it correct>
+
+Option A
+Correct / Incorrect
+<one concise line stating precisely why this option is correct or incorrect>
+
+Option B
+Correct / Incorrect
+<one concise line stating precisely why this option is correct or incorrect>
+
+Option C
+Correct / Incorrect
+<one concise line stating precisely why this option is correct or incorrect>
+
+Option D
+Correct / Incorrect
+<one concise line stating precisely why this option is correct or incorrect>
+
+Concept Tested
+<one to two lines on the underlying concept being tested, oriented toward understanding rather than memorization>
+
+Related Topics
+<2-4 closely related topics the student should revise next (e.g. "Fundamental Rights ↔ DPSP", "Repo Rate ↔ Reverse Repo")>
+
+Rules for this structure:
+- Always cover all four options individually — never skip one, and never merge two options into a single line.
+- State precisely why each incorrect option is wrong (name the misconception it plays on wherever applicable, e.g. "confuses X with Y") and precisely why the correct option is right — never a vague "this is incorrect" without a stated reason.
+- For question types where the four MCQ choices are answer-codes, A/R combinations, or orderings rather than plain statements (Match the Following, Assertion-Reason, Chronology, Consider the following statements/pairs, etc.), "Option A/B/C/D" refers to the four choices exactly as they appear in the options array — explain what each one claims and why it is correct or incorrect.
+- Do not repeat the same justification across multiple options or sections — each line must add new information.
+- Every fact used in every section must be directly supported or directly contradicted by the notes, per the verifiability rule above — never justify an option using external knowledge or the absence of information in the notes.
+- Keep the whole explanation concise and exam-oriented - short lines, no filler, no unnecessary paragraphs - approximately 90-150 words total.
 
 Internal validation — before including each question in your output, silently check it against every item below, and regenerate that question from scratch if any check fails (do not mention this checking process in your output, only return the final, validated questions):
 - Exactly one option is correct given the facts as stated; no other option could also be defended as correct.
@@ -286,7 +334,8 @@ Internal validation — before including each question in your output, silently 
 - This question is not a near-duplicate of another question already generated in this batch (same fact, same stem, or same underlying test).
 - No formatting pattern, option ordering, or code pattern reveals the answer without solving the question.
 - No option is obviously impossible or absurd on its face.
-- No fact appears anywhere in the question, options, or explanation that is not supported by the supplied notes.
+- No fact appears anywhere in the question stem, statements, options, Match the Following entries, Assertion, Reason, chronology events, or explanation that is not either directly supported or directly contradicted by the supplied notes — if any single piece cannot be classified as one or the other, discard the entire question and regenerate a different one from scratch.
+- No option's correctness depends on external/general knowledge, and no option is marked incorrect merely because the notes are silent on it.
 - For Match the Following questions specifically: confirm the correct code is not an identity mapping and does not trivially reveal itself.
 
 Other rules:
