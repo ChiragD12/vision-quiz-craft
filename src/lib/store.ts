@@ -7,7 +7,7 @@
 //   - StreakDay[]
 // Core subjects are seeded on first read.
 
-import { CORE_SUBJECTS, isCoreSubjectId, normalizeName } from "@/domain/subjects";
+import { CORE_SUBJECTS, isCoreSubjectId, normalizeName, PYQS_SUBJECT_ID } from "@/domain/subjects";
 import { todayKey } from "@/domain/streak";
 import { validateTopic, validateSubject, isUUID } from "./db-validation";
 import { computeUnlockDelta, type UnlockDelta } from "./journey";
@@ -135,6 +135,11 @@ export type DB = {
   gemini_model: string;
 };
 
+// PYQs has no visible topic layer — it's one notebook, one note. This is the
+// fixed id of the single hidden topic that backs it. It's an implementation
+// detail only: the UI never shows a topic list, name, or picker for PYQs.
+export const PYQS_TOPIC_ID = "core-pyqs-topic";
+
 const KEY = "upsc_revision_db_v1";
 const KEY_APIKEY = "upsc_revision_gemini_key";
 const KEY_MASTER_VOLUME = "upsc_master_volume";
@@ -202,6 +207,17 @@ function seedCore(db: DB) {
       s.kind = isCoreSubjectId(s.id) ? "core" : "custom";
       changed = true;
     }
+  }
+  // Ensure the single hidden PYQs topic exists. The UI skips the topic
+  // layer entirely for PYQs, so this id/name is never surfaced to the user.
+  if (!db.topics.find((t) => t.id === PYQS_TOPIC_ID)) {
+    db.topics.push({
+      id: PYQS_TOPIC_ID,
+      subject_id: PYQS_SUBJECT_ID,
+      name: "PYQs",
+      created_at: Date.now(),
+    });
+    changed = true;
   }
   return changed;
 }

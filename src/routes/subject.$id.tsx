@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { api } from "@/lib/store";
+import { api, PYQS_TOPIC_ID } from "@/lib/store";
+import { PYQS_SUBJECT_ID } from "@/domain/subjects";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, FileText, PlusCircle, Pencil } from "lucide-react";
@@ -42,6 +43,24 @@ const topics = isHistoryHub
     ? [...artCultureSections, ...api.topicsForSubject(id)]
     : api.topicsForSubject(id);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // PYQs has no topic layer: selecting it should open its single note
+  // editor immediately instead of a topic list.
+  const isPYQs = id === PYQS_SUBJECT_ID;
+
+  useEffect(() => {
+    if (isPYQs) {
+      navigate({
+        to: "/topic/$topicId/notes",
+        params: { topicId: PYQS_TOPIC_ID },
+        replace: true,
+      });
+    }
+  }, [isPYQs, navigate]);
+
+  if (isPYQs) {
+    return null;
+  }
 
   if (!subject) {
     return (

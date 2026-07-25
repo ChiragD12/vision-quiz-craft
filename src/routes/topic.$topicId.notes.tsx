@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { api } from "@/lib/store";
+import { PYQS_SUBJECT_ID } from "@/domain/subjects";
 import { importNotes } from "@/lib/notes-extraction";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +30,9 @@ function TopicNotesPage() {
   const topic = subjects.flatMap((s) => api.topicsForSubject(s.id)).find((t) => t.id === topicId);
   const subject = topic ? subjects.find((s) => s.id === topic.subject_id) : null;
   const allNotes = api.notesForTopic(topicId);
+  // PYQs has no subject page to go "back" to (it skips the topic layer),
+  // so exits from its note editor go home instead.
+  const isPYQsTopic = subject?.id === PYQS_SUBJECT_ID;
 
   const aggregatedContent = useMemo(() => {
     return allNotes.map((n) => n.content).join("\n\n---\n\n");
@@ -72,7 +76,11 @@ function TopicNotesPage() {
     api.addNote(topicId, content, "text");
 
     toast.success("Notes saved.");
-    navigate({ to: "/subject/$id", params: { id: subject?.id || "" }, replace: true });
+    if (isPYQsTopic) {
+      navigate({ to: "/", replace: true });
+    } else {
+      navigate({ to: "/subject/$id", params: { id: subject?.id || "" }, replace: true });
+    }
   };
 
   if (!topic || !subject) {
@@ -98,6 +106,8 @@ function TopicNotesPage() {
             onClick={() => {
   if (window.history.length > 1) {
     window.history.back();
+  } else if (isPYQsTopic) {
+    navigate({ to: "/" });
   } else {
     navigate({
       to: "/subject/$id",

@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, type Quiz } from "@/lib/store";
+import { api, PYQS_TOPIC_ID, type Quiz } from "@/lib/store";
 import { extractNotes, generateMCQs } from "@/lib/gemini";
-import { normalizeName } from "@/domain/subjects";
+import { normalizeName, PYQS_SUBJECT_ID } from "@/domain/subjects";
 import { todayKey } from "@/domain/streak";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +118,10 @@ function NewQuizPage() {
   const [count, setCount] = useState<Count>(25);
   const [busy, setBusy] = useState<string | null>(null);
 
+  // PYQs has no topic layer: the topic picker is hidden and the single
+  // hidden PYQs note is used automatically.
+  const isPYQs = subjectId === PYQS_SUBJECT_ID;
+
   useEffect(() => {
     setFullscreenLoading(busy !== null);
   }, [busy]);
@@ -174,6 +178,9 @@ function NewQuizPage() {
     return null;
   };
   const resolveTopic = (subId: string) => {
+    if (subId === PYQS_SUBJECT_ID) {
+      return api.topicsForSubject(subId).find((t) => t.id === PYQS_TOPIC_ID) ?? null;
+    }
     if (topicId && topicId !== NEW_VALUE) {
       const found = topics.find((t) => t.id === topicId);
       if (found) return found;
@@ -250,7 +257,7 @@ function NewQuizPage() {
       const createdAt = Date.now();
       const quiz: Quiz = {
         id: crypto.randomUUID(),
-        title: `${sub.name} — ${topic.name}`,
+        title: isPYQs ? sub.name : `${sub.name} — ${topic.name}`,
         subject_id: sub.id,
         topic_id: topic.id,
         question_count: questions.length,
@@ -335,31 +342,33 @@ return (
                 />
               )}
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Topic</label>
-              <Select value={topicId} onValueChange={(v) => setTopicId(v)} disabled={!subjectId}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder={subjectId ? "Choose topic" : "Pick a subject first"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {topics.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={NEW_VALUE}>+ Create new topic…</SelectItem>
-                </SelectContent>
-              </Select>
-              {topicId === NEW_VALUE && (
-                <Input
-                  className="mt-2"
-                  autoFocus
-                  placeholder="New topic name"
-                  value={newTopic}
-                  onChange={(e) => setNewTopic(e.target.value)}
-                />
-              )}
-            </div>
+            {!isPYQs && (
+              <div>
+                <label className="text-xs text-muted-foreground">Topic</label>
+                <Select value={topicId} onValueChange={(v) => setTopicId(v)} disabled={!subjectId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={subjectId ? "Choose topic" : "Pick a subject first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {topics.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={NEW_VALUE}>+ Create new topic…</SelectItem>
+                  </SelectContent>
+                </Select>
+                {topicId === NEW_VALUE && (
+                  <Input
+                    className="mt-2"
+                    autoFocus
+                    placeholder="New topic name"
+                    value={newTopic}
+                    onChange={(e) => setNewTopic(e.target.value)}
+                  />
+                )}
+              </div>
+            )}
           </div>
         </Card>
 

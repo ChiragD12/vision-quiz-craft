@@ -20,7 +20,13 @@ export const CORE_SUBJECTS: readonly CoreSubjectSeed[] = [
   { id: "core-indian-dances", name: "Indian Classical & Folk Dances" },
   { id: "core-indian-temples", name: "Indian Temples" },
   { id: "core-current-affairs", name: "Current Affairs" },
+  { id: "core-pyqs", name: "PYQs" },
 ] as const;
+
+// PYQs is a special core subject: it has no visible topic layer. Selecting
+// it opens straight into a single note editor backed by one hidden topic
+// (see PYQS_TOPIC_ID in lib/store.ts).
+export const PYQS_SUBJECT_ID = "core-pyqs";
 
 export const isCoreSubjectId = (id: string) => id.startsWith("core-");
 
