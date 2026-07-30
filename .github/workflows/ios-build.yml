@@ -11,37 +11,23 @@ jobs:
     runs-on: macos-15
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods
-
-      - name: Install Pods
-        working-directory: ios/App
-        run: |
-          pod install
-
-      - name: Build iOS App
+      - name: Build iOS
         run: |
           xcodebuild \
-            -workspace ios/App/App.xcworkspace \
+            -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Debug \
-            -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
             build
 
-      - name: Upload Build
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: ios-build
-          path: |
-            ~/Library/Developer/Xcode/DerivedData
+          name: derived-data
+          path: ~/Library/Developer/Xcode/DerivedData
