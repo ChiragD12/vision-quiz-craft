@@ -1,0 +1,19 @@
+--- a/dist/esm/vite/preview-server-plugin/plugin.js
++++ b/dist/esm/vite/preview-server-plugin/plugin.js
+@@ -19,8 +19,14 @@
+ 							if (!serverBuild) {
+ 								const serverEnv = server.config.environments[VITE_ENVIRONMENT_NAMES.server];
+ 								const serverInput = getBundlerOptions(serverEnv?.build)?.input ?? "server";
+-								if (typeof serverInput !== "string") throw new Error("Invalid server input. Expected a string.");
+-								const outputFilename = `${basename(serverInput, extname(serverInput))}.js`;
++								let entryName;
++								if (typeof serverInput === "string") entryName = basename(serverInput, extname(serverInput));
++								else if (serverInput && typeof serverInput === "object" && !Array.isArray(serverInput)) {
++									const keys = Object.keys(serverInput);
++									if (keys.length === 0) throw new Error("Invalid server input. Expected at least one entry.");
++									entryName = keys[0];
++								} else throw new Error("Invalid server input. Expected a string or an entry-name map.");
++								const outputFilename = `${entryName}.js`;
+ 								serverBuild = (await import(pathToFileURL(join(getServerOutputDirectory(server.config), outputFilename)).toString())).default;
+ 							}
+ 							req.url = joinURL(server.config.base, req.url ?? "/");
