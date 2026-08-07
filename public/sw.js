@@ -76,3 +76,100 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+/* ---------------------------------------------------------------------
+ * Web Push support (merged in from the Pregnancy App reference sw.js).
+ * Everything below is additive — it does not touch the caching logic
+ * above, and none of it interferes with the "fetch" handler since these
+ * are separate event types.
+ * ------------------------------------------------------------------- */
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: "Notification", body: event.data.text() };
+  }
+
+  const {
+    title = "Notification",
+    body = "",
+    tag = "default",
+    icon = "/apple-touch-icon.png",
+    badge = "/apple-touch-icon.png",
+    url = "/",
+  } = payload;
+
+  // Same tag + renotify:false = the OS/browser collapses duplicate
+  // notifications instead of stacking them, on top of any server-side lock.
+  const options = { body, tag, icon, badge, renotify: false, data: { url } };
+
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      const appIsVisible = clientList.some((client) => client.visibilityState === "visible");
+
+      // A visible window means the user is already looking at the app, so a
+      // system notification on top would just be a duplicate.
+      if (appIsVisible) return;
+
+      await self.registration.showNotification(title, options);
+    })(),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    }),
+  );
+});
+
+// Fires when the browser/OS invalidates the current push subscription (e.g.
+// it expired, or the push service rotated it) and hands us a fresh one.
+// Re-subscribing with the same applicationServerKey and re-POSTing to
+// /api/subscribe keeps the server's copy in sync without any user action.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(
+    (async () => {
+      const oldSubscription = event.oldSubscription;
+      const applicationServerKey =
+        oldSubscription && oldSubscription.options
+          ? oldSubscription.options.applicationServerKey
+          : undefined;
+
+      try {
+        const newSubscription = await self.registration.pushManager.subscribe(
+          applicationServerKey
+            ? { userVisibleOnly: true, applicationServerKey }
+            : { userVisibleOnly: true },
+        );
+
+        await fetch("/api/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newSubscription.toJSON()),
+        });
+      } catch {
+        // Nothing safe to do here if re-subscription fails; the next
+        // successful ensurePushSubscription() call from the app will retry.
+      }
+    })(),
+  );
+});

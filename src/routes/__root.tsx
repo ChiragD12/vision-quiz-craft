@@ -8,12 +8,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerServiceWorker } from "../lib/pwa-register";
+import { ensurePushSubscription } from "@/lib/push-client";
+import { scheduleRevisionSync, syncRevisionsNow } from "@/lib/revision-sync";
 import { Toaster } from "@/components/ui/sonner";
 import { SplashScreen } from "@/components/splash-screen";
 import { WallpaperSelector } from "@/components/wallpaper-selector";
@@ -139,12 +141,19 @@ function HomeLogo() {
   const isHome = pathname === "/";
 
   const [{ theme }] = useAppearance();
-  const [unlockedImages, setUnlockedImages] = useState(() => api.unlockedImageCount());
+  // Start from a stable, SSR-safe default. api.unlockedImageCount() reads
+  // from the browser-only store, so calling it during the initial render
+  // (e.g. via a useState initializer) returns a different value on the
+  // server than on the client and causes a hydration mismatch. The real
+  // count is read after mount instead, once in this effect and again on
+  // every store change.
+  const [unlockedImages, setUnlockedImages] = useState(0);
 
   // Re-read the existing count from the store whenever it broadcasts a
   // change, so the logo tracks Lion evolutions without polling or
   // duplicating the progression calculation done in currentLion().
   useEffect(() => {
+    setUnlockedImages(api.unlockedImageCount());
     const handleDbChange = () => setUnlockedImages(api.unlockedImageCount());
     window.addEventListener("upsc-db-change", handleDbChange);
     return () => window.removeEventListener("upsc-db-change", handleDbChange);
@@ -178,6 +187,31 @@ function RootComponent() {
 
   useEffect(() => {
     registerServiceWorker();
+  }, []);
+
+  // Silent push opt-in, once per app session. No button, no settings toggle:
+  // this asks via the browser's own permission prompt, subscribes if
+  // granted, and otherwise never asks again. Any failure (unsupported
+  // browser, denied permission, network error, etc.) is swallowed inside
+  // ensurePushSubscription and never blocks the rest of the app.
+  const pushAttempted = useRef(false);
+  useEffect(() => {
+    if (pushAttempted.current) return;
+    pushAttempted.current = true;
+    void ensurePushSubscription();
+  }, []);
+
+  // Keep the Upstash spaced-revision snapshot in sync so the send-quiz
+  // cron endpoint (which runs server-side, with no localStorage access)
+  // has something current to read. localStorage/store.ts stays the real
+  // source of truth — this only ever pushes a small notification snapshot
+  // up, never reads one back. Synced once on load to catch changes made
+  // while the app was closed, and again on every local DB write.
+  useEffect(() => {
+    void syncRevisionsNow();
+    const onDbChange = () => scheduleRevisionSync();
+    window.addEventListener("upsc-db-change", onDbChange);
+    return () => window.removeEventListener("upsc-db-change", onDbChange);
   }, []);
 
   useEffect(() => {

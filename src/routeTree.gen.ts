@@ -25,6 +25,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubjectIdRouteImport } from './routes/subject.$id'
 import { Route as ResultIdRouteImport } from './routes/result.$id'
 import { Route as QuizIdRouteImport } from './routes/quiz.$id'
+import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
+import { Route as ApiSyncRevisionsRouteImport } from './routes/api/sync-revisions'
+import { Route as ApiSubscribeRouteImport } from './routes/api/subscribe'
+import { Route as ApiSendQuizRouteImport } from './routes/api/send-quiz'
 import { Route as TopicTopicIdNotesRouteImport } from './routes/topic.$topicId.notes'
 import { Route as SubjectIdAddTopicRouteImport } from './routes/subject.$id.add-topic'
 
@@ -108,6 +112,26 @@ const QuizIdRoute = QuizIdRouteImport.update({
   path: '/quiz/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
+  id: '/api/unsubscribe',
+  path: '/api/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSyncRevisionsRoute = ApiSyncRevisionsRouteImport.update({
+  id: '/api/sync-revisions',
+  path: '/api/sync-revisions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSubscribeRoute = ApiSubscribeRouteImport.update({
+  id: '/api/subscribe',
+  path: '/api/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSendQuizRoute = ApiSendQuizRouteImport.update({
+  id: '/api/send-quiz',
+  path: '/api/send-quiz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TopicTopicIdNotesRoute = TopicTopicIdNotesRouteImport.update({
   id: '/topic/$topicId/notes',
   path: '/topic/$topicId/notes',
@@ -133,6 +157,10 @@ export interface FileRoutesByFullPath {
   '/spaced-revision': typeof SpacedRevisionRoute
   '/stats': typeof StatsRoute
   '/subjects': typeof SubjectsRoute
+  '/api/send-quiz': typeof ApiSendQuizRoute
+  '/api/subscribe': typeof ApiSubscribeRoute
+  '/api/sync-revisions': typeof ApiSyncRevisionsRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/quiz/$id': typeof QuizIdRoute
   '/result/$id': typeof ResultIdRoute
   '/subject/$id': typeof SubjectIdRouteWithChildren
@@ -153,6 +181,10 @@ export interface FileRoutesByTo {
   '/spaced-revision': typeof SpacedRevisionRoute
   '/stats': typeof StatsRoute
   '/subjects': typeof SubjectsRoute
+  '/api/send-quiz': typeof ApiSendQuizRoute
+  '/api/subscribe': typeof ApiSubscribeRoute
+  '/api/sync-revisions': typeof ApiSyncRevisionsRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/quiz/$id': typeof QuizIdRoute
   '/result/$id': typeof ResultIdRoute
   '/subject/$id': typeof SubjectIdRouteWithChildren
@@ -174,6 +206,10 @@ export interface FileRoutesById {
   '/spaced-revision': typeof SpacedRevisionRoute
   '/stats': typeof StatsRoute
   '/subjects': typeof SubjectsRoute
+  '/api/send-quiz': typeof ApiSendQuizRoute
+  '/api/subscribe': typeof ApiSubscribeRoute
+  '/api/sync-revisions': typeof ApiSyncRevisionsRoute
+  '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/quiz/$id': typeof QuizIdRoute
   '/result/$id': typeof ResultIdRoute
   '/subject/$id': typeof SubjectIdRouteWithChildren
@@ -196,6 +232,10 @@ export interface FileRouteTypes {
     | '/spaced-revision'
     | '/stats'
     | '/subjects'
+    | '/api/send-quiz'
+    | '/api/subscribe'
+    | '/api/sync-revisions'
+    | '/api/unsubscribe'
     | '/quiz/$id'
     | '/result/$id'
     | '/subject/$id'
@@ -216,6 +256,10 @@ export interface FileRouteTypes {
     | '/spaced-revision'
     | '/stats'
     | '/subjects'
+    | '/api/send-quiz'
+    | '/api/subscribe'
+    | '/api/sync-revisions'
+    | '/api/unsubscribe'
     | '/quiz/$id'
     | '/result/$id'
     | '/subject/$id'
@@ -236,6 +280,10 @@ export interface FileRouteTypes {
     | '/spaced-revision'
     | '/stats'
     | '/subjects'
+    | '/api/send-quiz'
+    | '/api/subscribe'
+    | '/api/sync-revisions'
+    | '/api/unsubscribe'
     | '/quiz/$id'
     | '/result/$id'
     | '/subject/$id'
@@ -257,6 +305,10 @@ export interface RootRouteChildren {
   SpacedRevisionRoute: typeof SpacedRevisionRoute
   StatsRoute: typeof StatsRoute
   SubjectsRoute: typeof SubjectsRoute
+  ApiSendQuizRoute: typeof ApiSendQuizRoute
+  ApiSubscribeRoute: typeof ApiSubscribeRoute
+  ApiSyncRevisionsRoute: typeof ApiSyncRevisionsRoute
+  ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   QuizIdRoute: typeof QuizIdRoute
   ResultIdRoute: typeof ResultIdRoute
   SubjectIdRoute: typeof SubjectIdRouteWithChildren
@@ -377,6 +429,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuizIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/unsubscribe': {
+      id: '/api/unsubscribe'
+      path: '/api/unsubscribe'
+      fullPath: '/api/unsubscribe'
+      preLoaderRoute: typeof ApiUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sync-revisions': {
+      id: '/api/sync-revisions'
+      path: '/api/sync-revisions'
+      fullPath: '/api/sync-revisions'
+      preLoaderRoute: typeof ApiSyncRevisionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/subscribe': {
+      id: '/api/subscribe'
+      path: '/api/subscribe'
+      fullPath: '/api/subscribe'
+      preLoaderRoute: typeof ApiSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/send-quiz': {
+      id: '/api/send-quiz'
+      path: '/api/send-quiz'
+      fullPath: '/api/send-quiz'
+      preLoaderRoute: typeof ApiSendQuizRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/topic/$topicId/notes': {
       id: '/topic/$topicId/notes'
       path: '/topic/$topicId/notes'
@@ -420,6 +500,10 @@ const rootRouteChildren: RootRouteChildren = {
   SpacedRevisionRoute: SpacedRevisionRoute,
   StatsRoute: StatsRoute,
   SubjectsRoute: SubjectsRoute,
+  ApiSendQuizRoute: ApiSendQuizRoute,
+  ApiSubscribeRoute: ApiSubscribeRoute,
+  ApiSyncRevisionsRoute: ApiSyncRevisionsRoute,
+  ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   QuizIdRoute: QuizIdRoute,
   ResultIdRoute: ResultIdRoute,
   SubjectIdRoute: SubjectIdRouteWithChildren,

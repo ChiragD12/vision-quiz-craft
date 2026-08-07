@@ -15,9 +15,14 @@ import { useEffect, useState } from "react";
 //   reflect its current value. styles.css stays the single source of
 //   truth for what each value *looks like*; this file only decides
 //   *which* value is currently active.
-// - initAppearance() applies the saved preferences and is idempotent, so
-//   it's safe to call both at module load (before first paint) and again
-//   in a mount-time effect (hydration safety net).
+// - initAppearance() applies the saved preferences and is idempotent. It
+//   must only ever run after hydration (e.g. from a mount-time effect,
+//   such as the one already in __root.tsx) — never at module load. The
+//   <html> element is part of the SSR'd tree, so mutating its
+//   `style.colorScheme`/`data-theme` before React hydrates makes the
+//   client's initial DOM disagree with the server-rendered markup and
+//   triggers a hydration mismatch. Running it once the app has mounted
+//   keeps the attribute change entirely outside React's hydration diff.
 // - setAppearance() persists + applies + notifies other mounted
 //   consumers in the same tab (e.g. Settings page and root layout).
 // - useAppearance() is the React entry point every component should use.
@@ -145,7 +150,11 @@ export function applyAppearance(prefs: AppearancePreferences) {
 }
 
 // Reads the saved preferences and applies them in one step. Idempotent —
-// safe to call multiple times (module load + mount-time safety net).
+// safe to call multiple times. Must only be called after mount (e.g. from
+// a useEffect), never at module scope: the <html> element is rendered by
+// the server, so applying this before hydration would make the client's
+// pre-hydration DOM (data-theme/color-scheme already mutated) disagree
+// with the server-rendered markup and produce a hydration mismatch.
 export function initAppearance(): AppearancePreferences {
   const prefs = getAppearance();
   applyAppearance(prefs);
@@ -166,13 +175,14 @@ export function setAppearance(
   return next;
 }
 
-// Runs the instant this module is evaluated on the client — before
-// RootComponent (or any route) ever renders — so the saved theme (and any
-// future preference) is restored with no flash of the wrong appearance,
-// regardless of which page the app boots into.
-if (typeof document !== "undefined") {
-  initAppearance();
-}
+// initAppearance() is intentionally NOT invoked here at module scope.
+// __root.tsx already calls it inside a useEffect on mount, which runs
+// after hydration completes — that is now the only place the saved
+// theme/colorScheme gets applied to <html>, so the client's DOM matches
+// the server-rendered markup during hydration and no mismatch is
+// reported. (This trades a same-tab flash of the default theme on first
+// paint for a correct, warning-free hydration — the trade-off called for
+// when fixing this class of mismatch.)
 
 // ---------------- cross-consumer sync ----------------
 

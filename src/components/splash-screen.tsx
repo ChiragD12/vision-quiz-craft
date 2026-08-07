@@ -9,11 +9,19 @@ import { playSound, SOUNDS } from "@/lib/sound-manager";
 
 
 export function SplashScreen() {
-  const [quote] = useState(() => randomQuote());
+  // Deterministic on the first render (server and client must produce
+  // identical output here, or React throws a hydration mismatch).
+  // randomQuote()/Math.random() are only ever called after mount, once
+  // there's no SSR output left to disagree with.
+  const [quote, setQuote] = useState("");
   // Pick once per mount (session) and never reshuffle on rerenders.
-  const [splashImage] = useState(
-  () => SPLASH_ARTWORK[Math.floor(Math.random() * SPLASH_ARTWORK.length)]
-);
+  const [splashImage, setSplashImage] = useState(() => SPLASH_ARTWORK[0]);
+
+  useEffect(() => {
+    setQuote(randomQuote());
+    setSplashImage(SPLASH_ARTWORK[Math.floor(Math.random() * SPLASH_ARTWORK.length)]);
+  }, []);
+
   useEffect(() => {
     const staticSplash = document.getElementById("static-splash");
     if (staticSplash) staticSplash.remove();
