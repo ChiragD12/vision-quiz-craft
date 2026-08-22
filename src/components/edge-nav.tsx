@@ -76,7 +76,14 @@ export function EdgeNavProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Edge-swipe gesture: touchstart within 24px of the left edge, then drag right >= 48px.
+  // Edge-swipe gesture (works on every route, home included — on the home
+  // route it's simply redundant with the hamburger): touchstart within
+  // ~24px of the left edge, then a mostly-horizontal drag right of >= 60px
+  // opens the same menu the hamburger does. Listeners are passive (never
+  // call preventDefault), so this never blocks page scrolling, taps,
+  // links, forms, or any other touch interaction away from that ~24px
+  // strip — there's no overlay element sitting on the page to intercept
+  // anything, just a window-level touch listener.
   const gesture = useRef<{ x: number; y: number; active: boolean } | null>(null);
   useEffect(() => {
     const onStart = (e: TouchEvent) => {
@@ -94,7 +101,14 @@ export function EdgeNavProvider({ children }: { children: ReactNode }) {
       if (!t) return;
       const dx = t.clientX - g.x;
       const dy = Math.abs(t.clientY - g.y);
-      if (dx >= 48 && dy < 40) {
+      // Bail out of the gesture (without opening) once it reads as a
+      // vertical scroll, so a swipe that starts at the edge but goes
+      // mostly up/down never fires the menu.
+      if (dy >= 40) {
+        g.active = false;
+        return;
+      }
+      if (dx >= 60) {
         g.active = false;
         setOpen(true);
       }
@@ -133,6 +147,14 @@ export function EdgeNavProvider({ children }: { children: ReactNode }) {
 
 export function EdgeNavHamburger() {
   const { toggle, open } = useEdgeNav();
+
+  // Hamburger is home-only: on every other route it would sit on top of
+  // that page's own back button/header controls, so it's not rendered at
+  // all there (not just visually hidden) — the left-edge swipe gesture
+  // below is how the same menu opens everywhere else.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname !== "/") return null;
+
   return (
     <button
       type="button"
